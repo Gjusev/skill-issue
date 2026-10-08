@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Skill Issue — comparison viewer</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/">Skill Issue</a>
+    <span class="tagline">does the skill change the result? — local evidence viewer</span>
+  </header>
+
+  <main id="app" aria-live="polite">
+    <p class="muted">Loading…</p>
+  </main>
+
+  <section id="drawer" class="drawer" hidden aria-hidden="true">
+    <div class="drawer-backdrop" data-close></div>
+    <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+      <div class="drawer-head">
+        <h2 id="drawer-title">Evidence</h2>
+        <button type="button" class="btn" data-close>Close (Esc)</button>
+      </div>
+      <div id="drawer-body" class="drawer-body" tabindex="-1"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>Descriptive comparison only. Runs are labeled by the evidence actually observed; unmeasured dimensions are shown as “not measured”, never as zero.</p>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

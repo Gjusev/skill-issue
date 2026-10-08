@@ -1,0 +1,36 @@
+{
+  "specVersion": 1,
+  "id": "release-notes-demo",
+  "description": "Demo comparison on a synthetic task, using the simulated fixture agent (no model, no network). The baseline writes free-form notes; the skill variant reads the release-notes-format skill first and follows it.",
+  "task": {
+    "prompt": "Write RELEASE_NOTES.md summarizing notes.md for this release.",
+    "workspaceCopyFrom": "../workspaces/release-notes"
+  },
+  "verifier": {
+    "copyFrom": "../verifiers/release-notes",
+    "command": ["node", "verify.mjs"],
+    "timeoutMs": 20000,
+    "successCriteria": "RELEASE_NOTES.md exists and contains the sections Changelog, Known Issues and Roadmap, in that order"
+  },
+  "skill": {
+    "name": "release-notes-format",
+    "path": "../skills/release-notes-format"
+  },
+  "agent": {
+    "runner": "fixture",
+    "fixture": {
+      "baseline": [
+        { "action": "writeFile", "path": "RELEASE_NOTES.md", "content": "# Release notes\n\nStuff happened this quarter; see notes.md for everything.\n" }
+      ],
+      "skill": [
+        { "action": "invokeSkill" },
+        { "action": "readSkill" },
+        { "action": "writeFile", "path": "RELEASE_NOTES.md", "content": "# Release notes\n\n## Changelog\n\n- CSV export button on reports\n- Login loop fix for expired cookies\n- PDF library upgrade for Cyrillic\n\n## Known Issues\n\n- Slowness on dashboards over 50 widgets\n- Random 502s from the edge cache\n\n## Roadmap\n\n- Bulk edit for inventory rows\n- Public read-only status API\n" }
+      ]
+    }
+  },
+  "limits": {
+    "timeoutMsPerRun": 30000,
+    "repetitions": 1
+  }
+}

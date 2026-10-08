@@ -1,0 +1,30 @@
+{
+  "specVersion": 1,
+  "id": "release-notes-cc",
+  "description": "Same synthetic task as release-notes-demo, run against the real Claude Code CLI in headless mode. Requires local Claude Code authentication; keep limits small. Running it consumes model usage.",
+  "task": {
+    "prompt": "Write RELEASE_NOTES.md summarizing notes.md for this release.",
+    "workspaceCopyFrom": "../workspaces/release-notes"
+  },
+  "verifier": {
+    "copyFrom": "../verifiers/release-notes",
+    "command": ["node", "verify.mjs"],
+    "timeoutMs": 20000,
+    "successCriteria": "RELEASE_NOTES.md exists and contains the sections Changelog, Known Issues and Roadmap, in that order"
+  },
+  "skill": {
+    "name": "release-notes-format",
+    "path": "../skills/release-notes-format"
+  },
+  "agent": {
+    "runner": "claude-code",
+    "model": "sonnet",
+    "effort": "low",
+    "permissions": "acceptEdits"
+  },
+  "limits": {
+    "timeoutMsPerRun": 300000,
+    "maxBudgetUsd": 0.25,
+    "repetitions": 1
+  }
+}
