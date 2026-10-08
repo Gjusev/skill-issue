@@ -1,0 +1,46 @@
+# Local planning and internal documentation: never part of the public repository.
+/.internal/
+/docs/
+/doc/
+/documentation/
+/plans/
+/research/
+/AGENTS.md
+/CLAUDE.md
+/GEMINI.md
+/AGENT_PROMPT.md
+/PLAN.md
+/TASKS.md
+
+# Local agent configuration. Distributable skills live under skills/.
+/.claude/
+/.codex/
+/.cursor/
+/.opencode/
+/.agents/
+
+# Private inputs, generated reports, recordings, and temporary workspaces.
+/.local/
+/runs/
+/artifacts/
+/tmp/
+/temp/
+/playwright-report/
+/test-results/
+
+# Dependencies and build/test output.
+node_modules/
+/dist/
+/build/
+/coverage/
+*.tsbuildinfo
+
+# Credentials and machine-specific files.
+.env
+.env.*
+!.env.example
+*.log
+*.local
+*.local.*
+.DS_Store
+Thumbs.db
