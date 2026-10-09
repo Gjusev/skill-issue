@@ -12,6 +12,7 @@
  */
 import { parseArgs } from "node:util";
 import { mkdir, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { loadSpec } from "./core/spec.ts";
 import { prepareDryRun, runExperiment, readExperiment } from "./core/engine.ts";
@@ -23,6 +24,7 @@ import { startViewer } from "./report/server.ts";
 function usage(exit = 0): never {
   console.log(`skill-issue — compare a task with and without a skill
 
+  node src/cli.ts init [dir]                 scaffold a working comparison (fixture runner, no model)
   node src/cli.ts validate <spec.json> [--data-dir runs]
   node src/cli.ts prepare <spec.json> [--data-dir runs]
   node src/cli.ts run <spec.json> [--data-dir runs] [--repetitions N]
@@ -30,13 +32,107 @@ function usage(exit = 0): never {
   node src/cli.ts export <experimentDir> [-o out.json]
   node src/cli.ts viewer [--data-dir runs] [--port 4173]
 
-validate/prepare/viewer never invoke a model. run does, when the spec's
+validate/prepare/viewer/init never invoke a model. run does, when the spec's
 runner is a real agent; fixture specs run a simulated agent.`);
   process.exit(exit);
 }
 
+const SCAFFOLD_VERIFIER = `/** Verifier: exit 0 only when the success criterion holds.
+ *  It runs OUTSIDE the agent's workspace; SKILL_ISSUE_WORKSPACE points at it.
+ *  Replace this check with your own observable criterion. */
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+const ws = process.env.SKILL_ISSUE_WORKSPACE;
+try {
+  const text = await readFile(path.join(ws, "out.txt"), "utf8");
+  if (text.trim().length > 0) {
+    console.log("out.txt exists and is non-empty");
+    process.exit(0);
+  }
+  console.error("out.txt is empty");
+  process.exit(1);
+} catch {
+  console.error("out.txt was not created");
+  process.exit(1);
+}
+`;
+
+const SCAFFOLD_SKILL = `---
+name: scaffold-skill
+description: Describe when this skill should apply. Replace this placeholder skill with the one you want to compare.
+---
+
+# Scaffold skill
+
+Replace this content with the real skill under test. The comparison installs
+this directory into the skill variant's workspace, so keep it self-contained.
+`;
+
+async function cmdInit(target: string): Promise<void> {
+  const dir = path.resolve(target);
+  try {
+    await mkdir(dir, { recursive: false });
+  } catch (e) {
+    console.error(`cannot create ${dir}: ${(e as Error).message} (does it already exist?)`);
+    process.exit(1);
+  }
+  const spec = {
+    specVersion: 1,
+    id: path.basename(dir).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "my-comparison",
+    description: "Scaffolded comparison. Edit the prompt, the verifier criterion and the skill, then run.",
+    task: {
+      prompt: "Read notes.md and create out.txt with a one-line summary.",
+      workspaceCopyFrom: "./workspace",
+    },
+    verifier: {
+      copyFrom: "./verifier",
+      command: ["node", "verify.mjs"],
+      timeoutMs: 20000,
+      successCriteria: "out.txt exists and is non-empty",
+    },
+    skill: { name: "scaffold-skill", path: "./skill" },
+    agent: {
+      // Fixture runner: try the whole flow without a model. Switch to
+      // "claude-code" (and delete agent.fixture) when the task is ready.
+      runner: "fixture",
+      fixture: {
+        baseline: [],
+        skill: [
+          { action: "invokeSkill" },
+          { action: "readSkill" },
+          { action: "writeFile", path: "out.txt", content: "summary written after reading the skill\n" },
+        ],
+      },
+    },
+    limits: { timeoutMsPerRun: 30000, repetitions: 1 },
+  };
+  await mkdir(path.join(dir, "workspace"), { recursive: true });
+  await mkdir(path.join(dir, "verifier"), { recursive: true });
+  await mkdir(path.join(dir, "skill"), { recursive: true });
+  await writeFile(path.join(dir, "workspace", "notes.md"), "# Starter notes\n\n- Replace these notes with your task's real input.\n- The agent will be asked to summarize them into out.txt.\n", "utf8");
+  await writeFile(path.join(dir, "verifier", "verify.mjs"), SCAFFOLD_VERIFIER, "utf8");
+  await writeFile(path.join(dir, "skill", "SKILL.md"), SCAFFOLD_SKILL, "utf8");
+  await writeFile(path.join(dir, "task.json"), JSON.stringify(spec, null, 2) + "\n", "utf8");
+  console.log(`scaffolded: ${dir}`);
+  console.log(`
+next steps:
+  1. edit ${path.join(dir, "task.json")} — the prompt and the success criterion
+  2. put the skill under test into ${path.join(dir, "skill")}
+  3. make the verifier check your real criterion (${path.join(dir, "verifier", "verify.mjs")})
+  4. preview without cost:  node src/cli.ts validate ${path.join(dir, "task.json")}
+                            node src/cli.ts prepare ${path.join(dir, "task.json")}
+  5. run it:                node src/cli.ts run ${path.join(dir, "task.json")}
+  6. switch agent.runner to "claude-code" (remove agent.fixture) for a real comparison`);
+}
+
 async function main() {
   const [cmd, ...rest] = process.argv.slice(2);
+  if (cmd === "--version" || cmd === "-v") {
+    const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+    console.log(pkg.version);
+    process.exit(0);
+  }
   if (!cmd) usage(1);
 
   const positionals = () =>
@@ -52,6 +148,11 @@ async function main() {
     });
 
   switch (cmd) {
+    case "init": {
+      const args = positionals();
+      await cmdInit(args.positionals[0] ?? "my-comparison");
+      break;
+    }
     case "validate": {
       const args = positionals();
       const specPath = args.positionals[0];
@@ -122,14 +223,21 @@ async function main() {
       const args = positionals();
       const dir = args.positionals[0];
       if (!dir) usage(1);
-      printSummary(await readExperiment(dir));
+      const report = await readExperiment(dir).catch(() => {
+        console.error(`no readable experiment at ${dir} (expected <dir>/experiment.json)`);
+        process.exit(1);
+      });
+      printSummary(report);
       break;
     }
     case "export": {
       const args = positionals();
       const dir = args.positionals[0];
       if (!dir) usage(1);
-      const report = await readExperiment(dir);
+      const report = await readExperiment(dir).catch(() => {
+        console.error(`no readable experiment at ${dir} (expected <dir>/experiment.json)`);
+        process.exit(1);
+      });
       // The prompt lives in the spec, not in the report; hash it when resolvable.
       const specRes = await loadSpec(report.specPath).catch(() => null);
       const promptText = specRes?.spec?.task.prompt ?? null;

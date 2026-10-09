@@ -37,7 +37,9 @@ export async function hashFile(p: string): Promise<string> {
   return createHash("sha256").update(await readFile(p)).digest("hex");
 }
 
-/** Snapshot of {relativePosixPath: sha256} for change detection. */
+/** Snapshot of {relativePosixPath: sha256} for change detection. Empty
+ *  directories are recorded as pseudo-entries so creating/deleting them is
+ *  visible; non-empty dirs surface through their files. */
 export async function snapshotTree(root: string, excludeTopLevel: string[] = []): Promise<Map<string, string | null>> {
   const map = new Map<string, string | null>();
   await walk(root, root);
@@ -55,6 +57,8 @@ export async function snapshotTree(root: string, excludeTopLevel: string[] = [])
       const full = path.join(dir, e.name);
       const rel = path.relative(base, full).split(path.sep).join("/");
       if (e.isDirectory()) {
+        const children = await readdir(full).catch(() => []);
+        if (children.length === 0) map.set(`[dir] ${rel}`, "empty-dir");
         await walk(full, base);
       } else {
         try {

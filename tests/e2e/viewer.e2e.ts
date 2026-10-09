@@ -22,9 +22,7 @@ const CANDIDATE_BROWSERS = [
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
 ].filter((p): p is string => !!p && existsSync(p));
 
-function assert(cond: unknown, msg: string): asserts cond {
-  if (!cond) throw new Error(`e2e assertion failed: ${msg}`);
-}
+import assert from "node:assert/strict";
 
 async function main() {
   if (CANDIDATE_BROWSERS.length === 0) {
@@ -32,9 +30,11 @@ async function main() {
     return;
   }
 
-  // 1. Generate a real fixture experiment (no model).
+  // 1. Generate fixture experiments (no model): one normal, one timeout,
+  //    one with an invalid comparison (verifier tampered mid-run).
   const dataDir = await mkdtemp(path.join(tmpdir(), "skill-issue-e2e-"));
   const repo = path.resolve(import.meta.dirname, "..", "..");
+  const { writeFile } = await import("node:fs/promises");
   const specPath = path.join(repo, "examples", "tasks", "release-notes.fixture.json");
   const report = await runExperiment(specPath, createFixtureRunner(), { dataDir });
   assert(report.records.length === 2, "experiment produced two records");
@@ -42,6 +42,37 @@ async function main() {
   assert(skillRec?.status === "passed", "skill variant passed");
   const baseRec = report.records.find((r) => r.variantId === "baseline");
   assert(baseRec?.status === "failed", "baseline failed");
+
+  // timeout experiment
+  const timeoutSpec = {
+    specVersion: 1,
+    id: "e2e-timeout",
+    task: { prompt: "x", workspaceCopyFrom: path.join(repo, "examples", "workspaces", "release-notes") },
+    verifier: { copyFrom: path.join(repo, "examples", "verifiers", "release-notes"), command: ["node", "verify.mjs"], successCriteria: "x" },
+    skill: { name: "release-notes-format", path: path.join(repo, "examples", "skills", "release-notes-format") },
+    agent: { runner: "fixture", fixture: { baseline: [{ action: "sleep", ms: 60_000 }], skill: [{ action: "sleep", ms: 60_000 }] } },
+    limits: { timeoutMsPerRun: 800, repetitions: 1 },
+  };
+  const timeoutSpecPath = path.join(dataDir, "timeout-spec.json");
+  await writeFile(timeoutSpecPath, JSON.stringify(timeoutSpec), "utf8");
+  const timeoutReport = await runExperiment(timeoutSpecPath, createFixtureRunner(), { dataDir });
+  assert(timeoutReport.records.every((r) => r.status === "timeout"), "timeout statuses");
+
+  // invalid comparison experiment (skill variant tampers with the verifier)
+  const tamperSpec = JSON.parse(JSON.stringify(timeoutSpec));
+  tamperSpec.id = "e2e-invalid";
+  tamperSpec.limits = { timeoutMsPerRun: 20_000, repetitions: 1 };
+  tamperSpec.agent.fixture = {
+    baseline: [{ action: "exit", code: 0 }],
+    skill: [
+      { action: "writeFile", path: "../../../verifier/verify.mjs", content: "process.exit(0)\n" },
+      { action: "exit", code: 0 },
+    ],
+  };
+  const tamperSpecPath = path.join(dataDir, "tamper-spec.json");
+  await writeFile(tamperSpecPath, JSON.stringify(tamperSpec), "utf8");
+  const tamperReport = await runExperiment(tamperSpecPath, createFixtureRunner(), { dataDir });
+  assert(tamperReport.records.some((r) => r.status === "invalid_comparison"), "tamper produces invalid_comparison");
 
   // 2. Serve it.
   const viewer = await startViewer({ dataDir, port: 0 });
@@ -106,9 +137,50 @@ async function main() {
     assert(exportResp.variants?.length === 2, "export has both variants");
     assert(!JSON.stringify(exportResp).includes("Write RELEASE_NOTES.md summarizing"), "export excludes prompt text");
 
+    // List shows all three experiments with honest status chips
+    await page.goto(`${viewer.url}/`, { waitUntil: "networkidle0" });
+    const listText = await page.evaluate(() => document.body.textContent ?? "");
+    assert.ok(listText.includes(report.experimentId));
+    assert.ok(listText.includes(timeoutReport.experimentId));
+    assert.ok(listText.includes(tamperReport.experimentId));
+    assert.ok(listText.includes("not comparable"), "invalid experiment flagged in the list");
+
+    // Timeout detail: TIMEOUT badge, verifier not run, endReason mentions the kill
+    await page.goto(`${viewer.url}/#/exp/${timeoutReport.experimentId}`, { waitUntil: "networkidle0" });
+    let detailText = await page.evaluate(() => document.body.textContent ?? "");
+    assert.ok(detailText.toUpperCase().includes("TIMEOUT"), "timeout badge visible");
+    assert.ok(detailText.includes("verifier not run"), "verifier explicitly not run on timeout");
+    assert.ok(detailText.includes("process tree killed"));
+
+    // Invalid comparison detail: the tamper reason is visible and named
+    await page.goto(`${viewer.url}/#/exp/${tamperReport.experimentId}`, { waitUntil: "networkidle0" });
+    detailText = await page.evaluate(() => document.body.textContent ?? "");
+    assert.ok(detailText.includes("Comparison not valid"), "invalid banner shown");
+    assert.ok(detailText.includes("verifier files were modified"), "tamper reason named");
+    assert.ok(detailText.includes("excluded from comparison"));
+
+    // API rejects malformed experiment ids (path traversal guard)
+    const badId = await page.evaluate(async () => {
+      const r = await fetch("/api/experiments/..%5C..%5Cetc");
+      return r.status;
+    });
+    assert.equal(badId, 400, "encoded traversal id must be rejected");
+
+    // Keyboard-only: Tab reaches interactive controls in DOM order
+    await page.goto(`${viewer.url}/#/exp/${report.experimentId}`, { waitUntil: "networkidle0" });
+    const tabWalk = await page.evaluate(() => {
+      const focusables = Array.from(document.querySelectorAll("a[href], button:not([disabled])"));
+      const first = focusables[0] as HTMLElement;
+      first.focus();
+      return { total: focusables.length, activeIsControl: document.activeElement === first };
+    });
+    assert.ok(tabWalk.total >= 6, `expected several keyboard-reachable controls, got ${tabWalk.total}`);
+    assert.ok(tabWalk.activeIsControl);
+
     // Screenshots as local evidence
     await page.goto(`${viewer.url}/#/exp/${report.experimentId}`, { waitUntil: "networkidle0" });
     const artifacts = path.join(repo, "artifacts");
+    const { mkdir } = await import("node:fs/promises");
     await mkdir(artifacts, { recursive: true });
     await page.screenshot({ path: path.join(artifacts, "viewer-e2e-detail.png"), fullPage: true });
     await page.evaluate(() => {

@@ -14,7 +14,7 @@ skill: release-notes-format (ac8e8031)
   Descriptive comparison with 1 repetition(s): insufficient evidence for superiority claims.
 ```
 
-One run answers "what happened here?" It cannot answer "which skill is best", and the tool does not pretend otherwise. 61 automated tests, a real-browser e2e, and a live smoke run back everything this README claims.
+One run answers "what happened here?" It cannot answer "which skill is best", and the tool does not pretend otherwise. 75 automated tests, a CLI end-to-end journey, a real-browser e2e and a live smoke run back everything this README claims.
 
 ## Quick start
 
@@ -67,6 +67,7 @@ The viewer puts the variants side by side with activation evidence, change lists
 
 | command | what it does | model? |
 |---|---|---|
+| `init [dir]` | scaffold a working comparison: TaskSpec, workspace, verifier, skill | no |
 | `validate <spec>` | check a TaskSpec and its paths | no |
 | `prepare <spec>` | show the execution plan and limits | no |
 | `run <spec>` | execute the experiment | yes, unless the runner is `fixture` |
@@ -111,6 +112,7 @@ tests/          unit and integration tests plus the browser e2e
 ```bash
 npm run typecheck   # tsc --noEmit
 npm test            # node --test, fixtures only, no keys
+npm run test:cli    # end-to-end: init, validate, run, report, export as subprocesses
 npm run test:e2e    # browser e2e via puppeteer-core with a local Edge/Chrome
 ```
 

@@ -16,6 +16,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - run: npm run test:cli
       # The real-agent smoke test (claude-code runner) is intentionally not
       # run in CI: it requires authentication and consumes model usage.
       # The browser e2e needs a local browser binary and is run locally.

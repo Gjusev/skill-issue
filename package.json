@@ -13,6 +13,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "node --test \"tests/*.test.ts\"",
+    "test:cli": "node tests/e2e/cli.e2e.ts",
     "test:e2e": "node tests/e2e/viewer.e2e.ts",
     "viewer": "node src/cli.ts viewer"
   },

@@ -221,14 +221,7 @@ async function runVariant(ctx: {
   const isolationNote = runner.id === "claude-code" ? JSON.stringify({ configDirIsolated: raw.isolation.configDirIsolated, authSource: raw.isolation.authSource ? "credentials-copied" : "none" }) : null;
   if (isolationNote) await writeFile(path.join(variantDir, "isolation.json"), isolationNote, "utf8");
 
-  let runStatus: "completed" | "timeout" | "cancelled" | "error";
-  if (raw.timedOut) runStatus = "timeout";
-  else if (raw.cancelled) runStatus = "cancelled";
-  else if (raw.error) runStatus = "error";
-  else if (parsed.is_error) runStatus = "error";
-  else if (parsed.corruptLines > 0) runStatus = "error"; // corrupt stream is never blessed as success
-  else if (raw.exitCode !== 0 && parsed.resultText === null) runStatus = "error";
-  else runStatus = "completed";
+  const runStatus = deriveRunStatus(raw, parsed);
 
   // Snapshot the workspace BEFORE the verifier runs: the verifier may touch
   // the workspace, and those touches must not be attributed to the agent.
@@ -267,7 +260,7 @@ async function runVariant(ctx: {
   const endReason =
     runStatus === "timeout" ? `wall-clock limit of ${spec.limits.timeoutMsPerRun}ms exceeded; process tree killed`
     : runStatus === "cancelled" ? "cancelled by user; process tree killed"
-    : runStatus === "error" ? (sanitizeText(raw.error ?? "", [workspaceDir, ctx.experimentDir]) || (parsed.is_error ? "provider reported is_error" : raw.stdoutTruncated ? `output stream exceeded the capture cap (${2_000_000} chars); integrity of the tail could not be verified` : parsed.corruptLines > 0 ? `corrupt output stream (${parsed.corruptLines} unparseable lines)` : `agent exited with code ${raw.exitCode}`))
+    : runStatus === "error" ? (sanitizeText(raw.error ?? "", [workspaceDir, ctx.experimentDir]) || (parsed.is_error ? "provider reported is_error" : raw.stdoutTruncated ? `output stream exceeded the capture cap (${2_000_000} chars); integrity of the tail could not be verified` : parsed.corruptLines > 0 ? `corrupt output stream (${parsed.corruptLines} unparseable lines)` : parsed.resultText === null && raw.stdout.trim() === "" ? "agent produced no output stream; no completion evidence" : `agent exited with code ${raw.exitCode}`))
     : verifier.status === "passed" ? "agent completed; verifier observed the success criterion"
     : verifier.status === "failed" ? "agent completed; verifier did not observe the success criterion"
     : "agent completed; verifier could not run";
@@ -330,6 +323,24 @@ function dedupe(arr: string[]): string[] {
 
 function variantPlanCount(spec: TaskSpec): number {
   return spec.skill ? 2 : 1;
+}
+
+/** Pure: turn raw runner output + parsed stream into a run status.
+ *  Timeout/cancel win; then any integrity problem (spawn error, provider
+ *  is_error, corrupt lines, empty stream, bad exit without a result) makes
+ *  the run an error; only clean evidence of completion yields "completed". */
+export function deriveRunStatus(
+  raw: { timedOut: boolean; cancelled: boolean; error: string | null; exitCode: number | null; stdout: string },
+  parsed: { is_error: boolean; corruptLines: number; resultText: string | null },
+): "completed" | "timeout" | "cancelled" | "error" {
+  if (raw.timedOut) return "timeout";
+  if (raw.cancelled) return "cancelled";
+  if (raw.error) return "error";
+  if (parsed.is_error) return "error";
+  if (parsed.corruptLines > 0) return "error";
+  if (parsed.resultText === null && raw.stdout.trim() === "") return "error";
+  if (raw.exitCode !== 0 && parsed.resultText === null) return "error";
+  return "completed";
 }
 
 /**

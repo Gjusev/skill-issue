@@ -27,8 +27,9 @@ written, installed, or summarized, this skill does not apply — say so and stop
    - starting workspace: a directory whose bytes are the task's initial state;
    - verifier: a script outside that workspace that exits 0 only when the
      criterion holds;
-   - TaskSpec JSON: prompt + paths + limits. Start from
-     `examples/tasks/release-notes.fixture.json` as a template.
+   - TaskSpec JSON: prompt + paths + limits. Scaffold them with
+     `node src/cli.ts init <dir>` (creates a working fixture-runner comparison
+     you then edit), or start from `examples/tasks/release-notes.fixture.json`.
 3. **Preview without spending anything.** `validate` and `prepare` never touch
    a model:
    ```bash
