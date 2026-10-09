@@ -1,0 +1,12 @@
+{
+  "name": "skill-issue",
+  "version": "0.1.2",
+  "description": "Compare an agent task with and without a skill, preserving activation and verification evidence.",
+  "author": {
+    "name": "Gjusev"
+  },
+  "homepage": "https://github.com/Gjusev/skill-issue",
+  "repository": "https://github.com/Gjusev/skill-issue",
+  "license": "MIT",
+  "keywords": ["agent-skills", "evaluation", "benchmarking", "claude-code", "evidence"]
+}

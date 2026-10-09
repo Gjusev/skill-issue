@@ -1,0 +1,15 @@
+{
+  "name": "skill-issue",
+  "description": "Evidence-driven comparisons for measuring whether an agent skill changes a concrete result.",
+  "owner": {
+    "name": "Gjusev"
+  },
+  "plugins": [
+    {
+      "name": "skill-issue",
+      "source": ".",
+      "description": "Run an honest baseline-versus-skill comparison with isolated workspaces and independent verification.",
+      "version": "0.1.2"
+    }
+  ]
+}

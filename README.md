@@ -117,6 +117,16 @@ npx skills@latest update                              # later, to pick up change
 
 For Claude Code, either use the same installer or copy the folder directly (verified):
 
+### Claude Code plugin
+
+Claude Code users can install the managed plugin from this repository's
+marketplace:
+
+```text
+/plugin marketplace add Gjusev/skill-issue
+/plugin install skill-issue@skill-issue
+```
+
 ```bash
 cp -r skills/skill-issue  /your/project/.claude/skills/     # project level
 cp -r skills/skill-issue  ~/.claude/skills/                 # user level
