@@ -23,7 +23,7 @@ One run answers "what happened here?" It cannot answer "which skill is best", an
 Install it as a CLI (Node.js 22.18+):
 
 ```bash
-npm install -g skill-issue-cli
+npm install -g skill-issue-tool
 skill-issue --version
 ```
 
@@ -103,7 +103,28 @@ Three separate claims, labeled separately in the viewer, and none implies the ne
 
 Comparisons are descriptive. Claiming a skill is better needs several repetitions per variant and more than one task, and even then this tool will show you differences rather than statistics. The harness isolates configuration, not the machine: workspaces are plain directories, so run only tasks and skills you trust. The budget limit is passed to the runner's supported flag and is not a hard spend guarantee. Only the Claude Code runner has been validated; nothing here claims support for other CLIs.
 
-The skill in [`skills/skill-issue/SKILL.md`](skills/skill-issue/SKILL.md) walks an agent through framing a verifiable task, previewing without cost, running with explicit confirmation, and reading reports without inventing conclusions. To use it with Claude Code, copy the `skills/skill-issue/` folder into your project's `.claude/skills/` directory (or into `~/.claude/skills/` for your user) and keep the repository itself cloned somewhere the commands can run from.
+The skill in [`skills/skill-issue/SKILL.md`](skills/skill-issue/SKILL.md) walks an agent through framing a verifiable task, previewing without cost, running with explicit confirmation, and reading reports without inventing conclusions.
+
+### Using the skill in different agent harnesses
+
+The skill is plain files: `SKILL.md` plus the `references/` folder next to it. Any harness that loads SKILL.md-style skills can host it. Only Claude Code has been verified end to end; the rest are the same folder placed in each tool's skills directory, following that tool's own conventions.
+
+```bash
+# Claude Code (verified)
+cp -r skills/skill-issue  /your/project/.claude/skills/     # project level
+cp -r skills/skill-issue  ~/.claude/skills/                 # user level
+
+# Codex, Cursor, opencode, Zed and other SKILL.md-compatible harnesses
+# (same folder, unverified here — check your tool's skills directory):
+cp -r skills/skill-issue  /your/project/.codex/skills/
+cp -r skills/skill-issue  /your/project/.cursor/skills/
+cp -r skills/skill-issue  /your/project/.opencode/skills/
+```
+
+Two things to keep in mind:
+
+- The skill needs the CLI reachable: either a clone of this repository or the npm package installed. The skill tells the agent to locate it; point your agent at the clone path if it asks.
+- You do not need any harness to use the tool itself. The CLI commands (`init`, `validate`, `prepare`, `run`, `report`, `export`, `viewer`) are harness-independent; the skill only teaches an agent the workflow around them.
 
 <details>
 <summary>Project layout</summary>
