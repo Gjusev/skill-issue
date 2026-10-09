@@ -1,7 +1,7 @@
 # Skill Issue
 
 <p align="center">
-  <img src="assets/social-preview.jpg" alt="Skill Issue — prove the skill" width="100%">
+  <img src="assets/social-preview.jpg" alt="Skill Issue: prove the skill" width="100%">
 </p>
 
 <p align="center"><sub><strong>GJUSEV / FIELD TOOL 02</strong> &nbsp;·&nbsp; PROVE THE SKILL</sub></p>
@@ -30,8 +30,8 @@ That is one observed comparison, not a universal ranking. Skill Issue reports wh
 
 | Before Skill Issue | After Skill Issue |
 | --- | --- |
-| “This skill feels useful.” | A task, starting workspace, exact skill revision, verifier, trace and changed files are kept together. |
-| One success becomes “the skill is better.” | The report labels the result as observed evidence and says when repetitions are insufficient for that claim. |
+| "This skill feels useful." | A task, starting workspace, exact skill revision, verifier, trace and changed files are kept together. |
+| One success becomes "the skill is better." | The report labels the result as observed evidence and says when repetitions are insufficient for that claim. |
 | Baseline and skill runs drift because the environment changed. | Both variants start from the same bytes and an external verifier checks the stated success criterion. |
 
 ## Start with a no-cost fixture
@@ -135,19 +135,19 @@ npx skills@latest update                              # later, to pick up change
 
 For Claude Code, either use the same installer or copy the folder directly (verified):
 
+```bash
+cp -r skills/skill-issue  /your/project/.claude/skills/     # project level
+cp -r skills/skill-issue  ~/.claude/skills/                 # user level
+```
+
 ### Claude Code plugin
 
-Claude Code users can install the managed plugin from this repository's
+Claude Code users can also install the managed plugin from this repository's
 marketplace:
 
 ```text
 /plugin marketplace add Gjusev/skill-issue
 /plugin install skill-issue@skill-issue
-```
-
-```bash
-cp -r skills/skill-issue  /your/project/.claude/skills/     # project level
-cp -r skills/skill-issue  ~/.claude/skills/                 # user level
 ```
 
 Two things to keep in mind:
