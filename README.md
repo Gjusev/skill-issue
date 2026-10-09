@@ -20,6 +20,15 @@ One run answers "what happened here?" It cannot answer "which skill is best", an
 
 ## Quick start
 
+Install it as a CLI (Node.js 22.18+):
+
+```bash
+npm install -g @gjxv/skill-issue
+skill-issue --version
+```
+
+Or work from a clone:
+
 ```bash
 git clone https://github.com/Gjusev/skill-issue
 cd skill-issue
