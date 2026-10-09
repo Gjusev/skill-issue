@@ -1,6 +1,6 @@
 {
   "name": "skill-issue-tool",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local harness that runs the same task with and without a skill, and shows the evidence: activation, verification, time and available metrics.",
   "type": "module",
   "license": "MIT",
@@ -14,11 +14,11 @@
   "homepage": "https://github.com/Gjusev/skill-issue#readme",
   "files": [
     "bin",
+    "dist",
     "src",
     "skills",
     "examples",
     "fixtures",
-    "tests",
     "tsconfig.json"
   ],
   "engines": {
@@ -28,6 +28,7 @@
     "skill-issue": "bin/skill-issue.mjs"
   },
   "scripts": {
+    "build": "node scripts/build.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --test \"tests/*.test.ts\"",
     "test:cli": "node tests/e2e/cli.e2e.ts",
