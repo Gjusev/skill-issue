@@ -1,6 +1,8 @@
 ---
 name: demo-skill
 description: Test-only skill used by Skill Issue's own fixtures. Never install outside tests.
+metadata:
+  internal: true
 ---
 
 # Demo skill

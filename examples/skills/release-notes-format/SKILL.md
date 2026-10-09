@@ -1,6 +1,8 @@
 ---
 name: release-notes-format
 description: Use when writing RELEASE_NOTES.md or any release summary from project notes. Prescribes the exact section structure and entry format the project expects.
+metadata:
+  internal: true
 ---
 
 # Release notes format
