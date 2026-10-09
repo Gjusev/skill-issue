@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.3 (2026-10-09)
+
+- Refined the local viewer with clearer experiment hierarchy, responsive
+  evidence controls, touch-friendly targets, and reduced-motion support.
+- Reworked the README around the no-cost fixture path, deliberate real-agent
+  runs, and the limits of a descriptive comparison.
+- Browser e2e now checks the narrow viewport has no horizontal page overflow
+  and evidence controls retain a 40px minimum target.
+
 ## 0.1.2 (2026-10-09)
 
 - Docs: universal skill install via `npx skills@latest add Gjusev/skill-issue`
