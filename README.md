@@ -107,23 +107,24 @@ The skill in [`skills/skill-issue/SKILL.md`](skills/skill-issue/SKILL.md) walks 
 
 ### Using the skill in different agent harnesses
 
-The skill is plain files: `SKILL.md` plus the `references/` folder next to it. Any harness that loads SKILL.md-style skills can host it. Only Claude Code has been verified end to end; the rest are the same folder placed in each tool's skills directory, following that tool's own conventions.
+The skill is plain files: `SKILL.md` plus the `references/` folder next to it. The universal installer works straight from this repository (verified; it carries the references along):
 
 ```bash
-# Claude Code (verified)
+npx skills@latest add Gjusev/skill-issue              # pick your agent interactively
+npx skills@latest add Gjusev/skill-issue -a cursor    # or name it: cursor, opencode, codex, windsurf, amp, ...
+npx skills@latest update                              # later, to pick up changes
+```
+
+For Claude Code, either use the same installer or copy the folder directly (verified):
+
+```bash
 cp -r skills/skill-issue  /your/project/.claude/skills/     # project level
 cp -r skills/skill-issue  ~/.claude/skills/                 # user level
-
-# Codex, Cursor, opencode, Zed and other SKILL.md-compatible harnesses
-# (same folder, unverified here — check your tool's skills directory):
-cp -r skills/skill-issue  /your/project/.codex/skills/
-cp -r skills/skill-issue  /your/project/.cursor/skills/
-cp -r skills/skill-issue  /your/project/.opencode/skills/
 ```
 
 Two things to keep in mind:
 
-- The skill needs the CLI reachable: either a clone of this repository or the npm package installed. The skill tells the agent to locate it; point your agent at the clone path if it asks.
+- The skill needs the CLI reachable: either a clone of this repository or `npm install -g skill-issue-tool`. The skill tells the agent to locate it; point your agent at the clone path if it asks.
 - You do not need any harness to use the tool itself. The CLI commands (`init`, `validate`, `prepare`, `run`, `report`, `export`, `viewer`) are harness-independent; the skill only teaches an agent the workflow around them.
 
 <details>
