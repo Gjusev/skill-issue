@@ -1,5 +1,7 @@
 # Skill Issue
 
+[![ci](https://github.com/Gjusev/skill-issue/actions/workflows/ci.yml/badge.svg)](https://github.com/Gjusev/skill-issue/actions/workflows/ci.yml)
+
 > Do your skills help the agent, or just take up context?
 
 Skill Issue runs the same task twice, once without a skill (the baseline) and once with it, under identical conditions. Then it shows you what happened: whether the skill was installed and read, what an independent verifier observed, which files changed, and whatever time and token numbers the runner reports. Everything runs on your machine; there is no account, no backend, and nothing leaves it.
@@ -14,13 +16,16 @@ skill: release-notes-format (ac8e8031)
   Descriptive comparison with 1 repetition(s): insufficient evidence for superiority claims.
 ```
 
-One run answers "what happened here?" It cannot answer "which skill is best", and the tool does not pretend otherwise. 75 automated tests, a CLI end-to-end journey, a real-browser e2e and live smoke runs back everything this README claims. Validated on Windows 11 and Ubuntu.
+One run answers "what happened here?" It cannot answer "which skill is best", and the tool does not pretend otherwise. Everything this README claims is backed by checks: 75 unit and integration tests, 10 CLI end-to-end tests, a real-browser e2e, and live smoke runs against Claude Code 2.1.294 (including a two-repetition comparison with consistent results). CI runs on every push; the suite has passed on Windows 11 and Ubuntu, on Node 22.18 and 24.
 
 ## Quick start
 
 ```bash
+git clone https://github.com/Gjusev/skill-issue
+cd skill-issue
 npm install
 npm test                # engine, runners, sanitization, comparability; no model, no keys
+npm run test:cli        # full CLI journey (init/validate/run/report/export) as subprocesses
 npm run test:e2e        # viewer in a real browser; needs a local Edge/Chrome, skips if absent
 
 # Fixture demo, no model involved:
@@ -122,4 +127,4 @@ CI runs typecheck and tests on every push (`.github/workflows/ci.yml`). The real
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE). Changes are tracked in [CHANGELOG.md](CHANGELOG.md).
