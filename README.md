@@ -26,6 +26,14 @@ skill: release-notes-format (ac8e8031)
 
 That is one observed comparison, not a universal ranking. Skill Issue reports what happened in these runs and keeps the evidence visible; it does not pronounce a "best" skill from a smoke test. The repository is checked by 75 unit/integration tests, 10 CLI end-to-end tests, a real-browser e2e, and live Claude Code 2.1.294 smoke runs. The suite has been exercised on Windows 11 and Ubuntu with Node 22.18 and 24.
 
+## Before → after: one claim becomes an experiment
+
+| Before Skill Issue | After Skill Issue |
+| --- | --- |
+| “This skill feels useful.” | A task, starting workspace, exact skill revision, verifier, trace and changed files are kept together. |
+| One success becomes “the skill is better.” | The report labels the result as observed evidence and says when repetitions are insufficient for that claim. |
+| Baseline and skill runs drift because the environment changed. | Both variants start from the same bytes and an external verifier checks the stated success criterion. |
+
 ## Start with a no-cost fixture
 
 Install it as a CLI (Node.js 22.18+):
