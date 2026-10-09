@@ -63,12 +63,11 @@ async function viewList() {
   const items = await j("/api/experiments");
   if (items.length === 0) {
     $app.innerHTML = `
-      <div class="card">
-        <h1>Experiments</h1>
-        <p>No experiments found in the data directory.</p>
-        <p class="muted">Run one first, e.g. with the fixture runner (no model needed):</p>
+      <div class="card" style="max-width: 560px;">
+        <h1>No experiments yet</h1>
+        <p class="muted">This viewer reads finished experiments from the data directory. Run one first; the fixture runner needs no model and no keys:</p>
         <pre class="clip">node src/cli.ts run examples/tasks/release-notes.fixture.json</pre>
-        <p class="muted">Then restart or reload this viewer.</p>
+        <p class="muted">Then reload this page.</p>
       </div>`;
     return;
   }
@@ -94,7 +93,7 @@ async function viewList() {
 function metricRow(label, value, unit) {
   const cell = value == null
     ? `<span class="notmeasured">not measured</span>`
-    : `${esc(value)}${unit ? " " + esc(unit) : ""}`;
+    : `<span class="num">${esc(value)}${unit ? " " + esc(unit) : ""}</span>`;
   return `<tr><th scope="row">${esc(label)}</th><td>${cell}</td></tr>`;
 }
 
@@ -212,12 +211,15 @@ async function viewDetail(id) {
 
 async function route() {
   const hash = location.hash || "#/";
+  $app.setAttribute("aria-busy", "true");
   try {
     const m = hash.match(/^#\/exp\/(.+)$/);
     if (m) await viewDetail(decodeURIComponent(m[1]));
     else await viewList();
   } catch (e) {
     $app.innerHTML = `<div class="card"><h1>Could not load</h1><p>${esc(e.message)}</p><p><a class="btn" href="#/">Back to list</a></p></div>`;
+  } finally {
+    $app.setAttribute("aria-busy", "false");
   }
 }
 

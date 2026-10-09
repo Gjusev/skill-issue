@@ -13,8 +13,13 @@
     <span class="tagline">does the skill change the result? — local evidence viewer</span>
   </header>
 
-  <main id="app" aria-live="polite">
-    <p class="muted">Loading…</p>
+  <main id="app" aria-live="polite" aria-busy="true">
+    <div class="card" aria-hidden="true">
+      <div class="skeleton skel-title"></div>
+      <div class="skeleton skel-row"></div>
+      <div class="skeleton skel-row"></div>
+      <div class="skeleton skel-row"></div>
+    </div>
   </main>
 
   <section id="drawer" class="drawer" hidden aria-hidden="true">
