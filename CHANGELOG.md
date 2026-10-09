@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4 (2026-10-09)
+
+- Viewer redesign: Swiss monochrome identity matching the repo brand. Near-black
+  surface, hard 1px rules instead of soft shadows, flat outline badges, mono
+  type for all data, black/white inversion on controls. Same DOM contract;
+  the browser e2e passes unchanged.
+
 ## 0.1.3 (2026-10-09)
 
 - Refined the local viewer with clearer experiment hierarchy, responsive
