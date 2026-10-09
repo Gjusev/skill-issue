@@ -23,7 +23,7 @@ One run answers "what happened here?" It cannot answer "which skill is best", an
 Install it as a CLI (Node.js 22.18+):
 
 ```bash
-npm install -g @gjxv/skill-issue
+npm install -g skill-issue-cli
 skill-issue --version
 ```
 
