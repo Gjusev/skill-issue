@@ -177,6 +177,21 @@ async function main() {
     assert.ok(tabWalk.total >= 6, `expected several keyboard-reachable controls, got ${tabWalk.total}`);
     assert.ok(tabWalk.activeIsControl);
 
+    // Responsive layout: the report remains usable without horizontal page overflow,
+    // and evidence actions retain a touch-friendly target at a narrow viewport.
+    await page.setViewport({ width: 390, height: 844 });
+    await page.reload({ waitUntil: "networkidle0" });
+    const mobileLayout = await page.evaluate(() => {
+      const evidence = document.querySelector(".evidence-link");
+      return {
+        pageFits: document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+        evidenceHeight: evidence ? Number.parseFloat(getComputedStyle(evidence).minHeight) : 0,
+      };
+    });
+    assert.ok(mobileLayout.pageFits, "mobile report has no horizontal page overflow");
+    assert.ok(mobileLayout.evidenceHeight >= 40, "evidence controls keep a 40px minimum target");
+    await page.setViewport({ width: 1280, height: 900 });
+
     // Screenshots as local evidence
     await page.goto(`${viewer.url}/#/exp/${report.experimentId}`, { waitUntil: "networkidle0" });
     const artifacts = path.join(repo, "artifacts");

@@ -63,7 +63,7 @@ async function viewList() {
   const items = await j("/api/experiments");
   if (items.length === 0) {
     $app.innerHTML = `
-      <div class="card" style="max-width: 560px;">
+      <div class="card empty-state" style="max-width: 560px;">
         <h1>No experiments yet</h1>
         <p class="muted">This viewer reads finished experiments from the data directory. Run one first; the fixture runner needs no model and no keys:</p>
         <pre class="clip">node src/cli.ts run examples/tasks/release-notes.fixture.json</pre>
@@ -81,8 +81,12 @@ async function viewList() {
       <td>${it.comparisonValid ? '<span class="chip yes">comparable</span>' : '<span class="chip no">not comparable</span>'}</td>
     </tr>`).join("");
   $app.innerHTML = `
-    <div class="card">
+    <div class="page-intro">
+      <p class="eyebrow">Local experiment archive</p>
       <h1>Experiments</h1>
+      <p class="muted">Open a completed comparison to inspect task outcomes, activation evidence, and only the measurements the runner actually reported.</p>
+    </div>
+    <div class="card list-card">
       <table class="plain">
         <thead><tr><th>Experiment</th><th>Task</th><th>Skill</th><th>Runner</th><th>Results</th><th>Comparison</th></tr></thead>
         <tbody>${rows}</tbody>
@@ -134,7 +138,7 @@ async function viewDetail(id) {
       : `<ul class="changes">${rec.changes.map((c) => `<li>${esc(c.change)} — ${esc(c.path)}</li>`).join("")}</ul>`;
 
     return `
-    <section class="card" aria-label="${esc(rec.variantId)} repetition ${rec.repetition}">
+    <section class="card run-card ${esc(rec.variantId)}" aria-label="${esc(rec.variantId)} repetition ${rec.repetition}">
       <h2>${esc(rec.variantId)} <span class="muted">· repetition ${rec.repetition}</span></h2>
       <p><span class="badge ${esc(rec.status)}">${esc(rec.status)}</span> ${verifierChip}</p>
       <p class="muted">${esc(rec.endReason)}</p>
@@ -143,11 +147,11 @@ async function viewDetail(id) {
       <h3>Activation evidence</h3>
       <p>${installed} ${read}</p>
       <p class="muted">Installed = engine found SKILL.md in the run's config. Observed read = the run's event stream shows the skill being invoked or read. Neither implies the agent followed it — that is what the verifier measures, separately.</p>
-      <div data-evidence="${esc(rec.variantId)}-r${rec.repetition}">${evidenceButtons(rec)}</div>
+      <div class="evidence-actions" data-evidence="${esc(rec.variantId)}-r${rec.repetition}">${evidenceButtons(rec)}</div>
       <h3>Changes produced</h3>
       ${changes}
       <h3>Measurements</h3>
-      <table class="plain">
+      <table class="plain metrics-table">
         <tbody>
           ${metricRow("wall-clock duration", rec.metrics.durationMs, "ms")}
           ${metricRow("input tokens", rec.metrics.tokensIn, "")}
@@ -162,9 +166,13 @@ async function viewDetail(id) {
 
   $app.innerHTML = `
     <a class="backlink btn" href="#/">← All experiments</a>
-    <div class="card">
+    <div class="experiment-header">
+      <p class="eyebrow">Experiment record</p>
       <h1>${esc(r.taskId)} <span class="muted">· ${esc(r.experimentId)}</span></h1>
       ${r.description ? `<p>${esc(r.description)}</p>` : ""}
+    </div>
+    <div class="card summary-card">
+      <h2>Setup at a glance</h2>
       <dl class="kv">
         <dt>Success criterion</dt><dd>${esc(r.successCriteria)}</dd>
         <dt>Skill under test</dt><dd>${r.skill ? `${esc(r.skill.name)} (sha256 ${esc(r.skill.hash.slice(0, 12))}…)` : "(none)"}</dd>
@@ -174,8 +182,8 @@ async function viewDetail(id) {
         <dt>Spec hash</dt><dd>${esc(r.specHash.slice(0, 16))}…</dd>
       </dl>
       ${comparability}
-      <div class="note">${esc(r.comparison.note)}</div>
-      <p><a class="btn" href="/api/experiments/${encodeURIComponent(r.experimentId)}/export" download="skill-issue-export.json">Download sanitized export</a></p>
+      <div class="note comparison-note">${esc(r.comparison.note)}</div>
+      <p class="export-action"><a class="btn" href="/api/experiments/${encodeURIComponent(r.experimentId)}/export" download="skill-issue-export.json">Download sanitized export</a></p>
     </div>
     <div class="grid">${cards}</div>`;
 

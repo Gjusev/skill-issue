@@ -4,7 +4,9 @@
 
 > Do your skills help the agent, or just take up context?
 
-Skill Issue runs the same task twice, once without a skill (the baseline) and once with it, under identical conditions. Then it shows you what happened: whether the skill was installed and read, what an independent verifier observed, which files changed, and whatever time and token numbers the runner reports. Everything runs on your machine; there is no account, no backend, and nothing leaves it.
+Skill Issue is a local evidence harness for that question. It runs one bounded task from the same starting bytes in two variants: a baseline with no target skill, and a variant with it. An independent verifier, the run trace, the resulting file changes, and any reported time or token measurements stay together in one inspectable experiment.
+
+There is no hosted backend, account, or telemetry. You choose the task and keep the resulting evidence on your machine.
 
 This is what the tool printed after a real two-run comparison against Claude Code 2.1.294 on the example task:
 
@@ -16,9 +18,9 @@ skill: release-notes-format (ac8e8031)
   Descriptive comparison with 1 repetition(s): insufficient evidence for superiority claims.
 ```
 
-One run answers "what happened here?" It cannot answer "which skill is best", and the tool does not pretend otherwise. Everything this README claims is backed by checks: 75 unit and integration tests, 10 CLI end-to-end tests, a real-browser e2e, and live smoke runs against Claude Code 2.1.294 (including a two-repetition comparison with consistent results). CI runs on every push; the suite has passed on Windows 11 and Ubuntu, on Node 22.18 and 24.
+That is one observed comparison, not a universal ranking. Skill Issue reports what happened in these runs and keeps the evidence visible; it does not pronounce a "best" skill from a smoke test. The repository is checked by 75 unit/integration tests, 10 CLI end-to-end tests, a real-browser e2e, and live Claude Code 2.1.294 smoke runs. The suite has been exercised on Windows 11 and Ubuntu with Node 22.18 and 24.
 
-## Quick start
+## Start with a no-cost fixture
 
 Install it as a CLI (Node.js 22.18+):
 
@@ -37,22 +39,24 @@ npm test                # engine, runners, sanitization, comparability; no model
 npm run test:cli        # full CLI journey (init/validate/run/report/export) as subprocesses
 npm run test:e2e        # viewer in a real browser; needs a local Edge/Chrome, skips if absent
 
-# Fixture demo, no model involved:
+# Run the complete fixture demo. It uses no model and no keys.
 node src/cli.ts validate examples/tasks/release-notes.fixture.json
 node src/cli.ts run examples/tasks/release-notes.fixture.json
 node src/cli.ts viewer  # then open http://127.0.0.1:4173
 ```
 
-The demo compares a "release notes" task with and without the example `release-notes-format` skill. The scripted baseline writes free-form notes and fails the verifier; the skill variant reads the skill and passes. That exercises the whole pipeline. It says nothing about real agents, and the report labels it as a fixture run.
+The demo compares a "release notes" task with and without the example `release-notes-format` skill. The scripted baseline writes free-form notes and fails the verifier; the skill variant reads the skill and passes. It exercises the complete pipeline, but it is explicitly a fixture run and says nothing about a real agent's effectiveness.
 
-To compare with a real agent (this consumes model usage, so it is an explicit step):
+## Run a real agent deliberately
+
+The Claude Code runner consumes model usage, so it is never started by import, preview, or the viewer. It needs an authenticated `claude` CLI and Node.js 22.18+:
 
 ```bash
 node src/cli.ts prepare examples/tasks/release-notes.claude-code.json
 node src/cli.ts run examples/tasks/release-notes.claude-code.json
 ```
 
-Node.js 22.18 or newer is required (the TypeScript source runs natively and there is no build step; the whole suite is verified on 22.18 and 24). The real runner also needs the `claude` CLI installed and authenticated.
+`prepare` shows the exact plan and limits without consuming a model. `run` is the explicit execution step. The harness creates a fresh configuration directory per run; it isolates experiment state, not the machine, so only use tasks and skills you trust.
 
 ## What one experiment looks like
 
