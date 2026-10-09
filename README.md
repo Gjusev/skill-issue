@@ -14,7 +14,7 @@ skill: release-notes-format (ac8e8031)
   Descriptive comparison with 1 repetition(s): insufficient evidence for superiority claims.
 ```
 
-One run answers "what happened here?" It cannot answer "which skill is best", and the tool does not pretend otherwise. 75 automated tests, a CLI end-to-end journey, a real-browser e2e and a live smoke run back everything this README claims.
+One run answers "what happened here?" It cannot answer "which skill is best", and the tool does not pretend otherwise. 75 automated tests, a CLI end-to-end journey, a real-browser e2e and live smoke runs back everything this README claims. Validated on Windows 11 and Ubuntu.
 
 ## Quick start
 
@@ -89,7 +89,7 @@ Three separate claims, labeled separately in the viewer, and none implies the ne
 
 Comparisons are descriptive. Claiming a skill is better needs several repetitions per variant and more than one task, and even then this tool will show you differences rather than statistics. The harness isolates configuration, not the machine: workspaces are plain directories, so run only tasks and skills you trust. The budget limit is passed to the runner's supported flag and is not a hard spend guarantee. Only the Claude Code runner has been validated; nothing here claims support for other CLIs.
 
-The skill in [`skills/skill-issue/SKILL.md`](skills/skill-issue/SKILL.md) walks an agent through framing a verifiable task, previewing without cost, running with explicit confirmation, and reading reports without inventing conclusions.
+The skill in [`skills/skill-issue/SKILL.md`](skills/skill-issue/SKILL.md) walks an agent through framing a verifiable task, previewing without cost, running with explicit confirmation, and reading reports without inventing conclusions. To use it with Claude Code, copy the `skills/skill-issue/` folder into your project's `.claude/skills/` directory (or into `~/.claude/skills/` for your user) and keep the repository itself cloned somewhere the commands can run from.
 
 <details>
 <summary>Project layout</summary>

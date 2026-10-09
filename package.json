@@ -1,9 +1,18 @@
 {
   "name": "skill-issue",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Local harness that runs the same task with and without a skill, and shows the evidence: activation, verification, time and available metrics.",
   "type": "module",
   "license": "MIT",
+  "files": [
+    "bin",
+    "src",
+    "skills",
+    "examples",
+    "fixtures",
+    "tests",
+    "tsconfig.json"
+  ],
   "engines": {
     "node": ">=22.6"
   },

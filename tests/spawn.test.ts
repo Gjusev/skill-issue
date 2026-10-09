@@ -45,18 +45,22 @@ test("commands run fine in a cwd containing spaces", async () => {
   assert.ok(res.stdout.trim().includes(path.basename(dir)));
 });
 
-test("stdout lines are streamed to the callback", async () => {
-  const lines: string[] = [];
+test("stdout and stderr lines stream to callbacks in per-stream order", async () => {
+  // Cross-stream interleaving is NOT guaranteed (separate pipes, OS
+  // scheduling); only the order within each stream is.
+  const out: string[] = [];
+  const err: string[] = [];
   const res = await spawnCapturing({
     cmd: process.execPath,
-    args: ["-e", "console.log('one'); console.error('err1'); console.log('two')"],
+    args: ["-e", "console.log('one'); console.error('err1'); console.log('two'); console.error('err2')"],
     cwd: process.cwd(),
     env: process.env,
-    onStdoutLine: (l) => lines.push(l),
-    onStderrLine: (l) => lines.push("E:" + l),
+    onStdoutLine: (l) => out.push(l),
+    onStderrLine: (l) => err.push(l),
   });
   assert.equal(res.exitCode, 0);
-  assert.deepEqual(lines, ["one", "E:err1", "two"]);
+  assert.deepEqual(out, ["one", "two"]);
+  assert.deepEqual(err, ["err1", "err2"]);
 });
 
 test("killing the tree takes grandchildren with it (orphan detection via file lock)", async () => {
