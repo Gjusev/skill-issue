@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.2 (2026-10-09)
+
+- Docs: universal skill install via `npx skills@latest add Gjusev/skill-issue`
+  (verified end to end), README refresh on the npm page.
+
+## 0.1.1 (2026-10-09)
+
+- Fixed the published package's bin: Node forbids type stripping under
+  node_modules, so the npm artifact now ships compiled `dist/` (tsc emit plus
+  viewer assets and the fixture agent). The bin prefers `dist/cli.js` and
+  falls back to `src/cli.ts` for git clones; a build step runs in CI.
+  0.1.0 and 1.0.0 are deprecated (their bin crashes on install).
+
 ## 0.1.0 (2026-10-09)
 
 First complete release.
