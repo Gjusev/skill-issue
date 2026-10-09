@@ -1,5 +1,11 @@
 # Skill Issue
 
+<p align="center">
+  <img src="assets/social-preview.jpg" alt="Skill Issue — prove the skill" width="100%">
+</p>
+
+<p align="center"><sub><strong>GJUSEV / FIELD TOOL 02</strong> &nbsp;·&nbsp; PROVE THE SKILL</sub></p>
+
 [![ci](https://github.com/Gjusev/skill-issue/actions/workflows/ci.yml/badge.svg)](https://github.com/Gjusev/skill-issue/actions/workflows/ci.yml)
 
 > Do your skills help the agent, or just take up context?
