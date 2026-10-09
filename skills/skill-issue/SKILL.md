@@ -10,7 +10,7 @@ once without a skill (baseline), once with it — under identical conditions,
 then reading the evidence. The harness is a CLI in the Skill Issue repository
 (`skill-issue`). Find it first: it is either the current working directory, or
 a clone the user points you to. All commands below assume its root as cwd and
-Node.js ≥ 22.6.
+Node.js ≥ 22.18.
 
 **Do not start here for anything else.** If the user only wants a skill
 written, installed, or summarized, this skill does not apply — say so and stop.
