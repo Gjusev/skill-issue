@@ -33,7 +33,8 @@ function usage(exit = 0): never {
   node src/cli.ts viewer [--data-dir runs] [--port 4173]
 
 validate/prepare/viewer/init never invoke a model. run does, when the spec's
-runner is a real agent; fixture specs run a simulated agent.`);
+runner is a real agent; fixture specs run a simulated agent.
+Node.js >= 22.18 required (runs the TypeScript source natively).`);
   process.exit(exit);
 }
 

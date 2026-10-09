@@ -3,7 +3,7 @@
  * full scaffold journey (init -> validate -> run -> report -> export).
  * No model is ever invoked (fixture runner only).
  */
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtemp, readFile, stat, readdir } from "node:fs/promises";
@@ -126,4 +126,47 @@ test("run rejects out-of-range repetitions before spawning anything", () => {
   assert.ok(r.out.includes("between 1 and 5"));
   const r2 = cli(["run", "examples/tasks/release-notes.fixture.json", "--repetitions", "abc"]);
   assert.equal(r2.code, 1);
+});
+
+test("the bin shim runs the CLI end to end", () => {
+  const res = spawnSync(process.execPath, [path.join(REPO, "bin", "skill-issue.mjs"), "--version"], {
+    cwd: REPO,
+    encoding: "utf8",
+    timeout: 30_000,
+  });
+  assert.equal(res.status, 0);
+  assert.match((res.stdout ?? "").trim(), /^\d+\.\d+\.\d+$/);
+});
+
+test("viewer command serves the UI over HTTP and stops on SIGTERM", async () => {
+  const port = 4300 + Math.floor(Math.random() * 400);
+  const dataDir = await mkdtemp(path.join(tmpdir(), "skill-issue-viewer-cli-"));
+  const child = spawn(process.execPath, [CLI, "viewer", "--data-dir", dataDir, "--port", String(port)], {
+    cwd: REPO,
+    stdio: "ignore",
+    env: process.env,
+  });
+  try {
+    // poll until the server answers
+    let html = "";
+    for (let i = 0; i < 40; i++) {
+      try {
+        const res = await fetch(`http://127.0.0.1:${port}/`);
+        if (res.ok) { html = await res.text(); break; }
+      } catch { /* not up yet */ }
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    assert.ok(html.includes("Skill Issue"), "viewer HTML served");
+    const api = await (await fetch(`http://127.0.0.1:${port}/api/experiments`)).json();
+    assert.ok(Array.isArray(api), "experiments API returns a list");
+    const missing = await fetch(`http://127.0.0.1:${port}/api/experiments/does-not-exist`);
+    assert.equal(missing.status, 404);
+  } finally {
+    child.kill("SIGTERM");
+    const gone = await new Promise<boolean>((resolve) => {
+      const t = setTimeout(() => resolve(false), 5000);
+      child.on("exit", () => { clearTimeout(t); resolve(true); });
+    });
+    assert.ok(gone, "viewer exits on SIGTERM");
+  }
 });

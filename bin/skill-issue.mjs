@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Shim that runs the TypeScript CLI directly. Requires Node >= 22.6
+// Shim that runs the TypeScript CLI directly. Requires Node >= 22.18
 // (native type stripping); the engine sets no other requirement.
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";

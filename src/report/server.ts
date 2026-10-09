@@ -70,14 +70,16 @@ export async function startViewer(opts: { dataDir: string; port: number }): Prom
       if (detail) {
         const id = decodeURIComponent(detail[1]!);
         if (!/^[A-Za-z0-9._-]+$/.test(id)) return send(400, "bad experiment id", "text/plain");
-        const report = await readExperiment(path.join(experimentsDir, id));
+        const report = await readExperiment(path.join(experimentsDir, id)).catch(() => null);
+        if (!report) return send(404, "experiment not found", "text/plain");
         return send(200, JSON.stringify(report), "application/json");
       }
       const exp = url.pathname.match(/^\/api\/experiments\/([^/]+)\/export$/);
       if (exp) {
         const id = decodeURIComponent(exp[1]!);
         if (!/^[A-Za-z0-9._-]+$/.test(id)) return send(400, "bad experiment id", "text/plain");
-        const report = await readExperiment(path.join(experimentsDir, id));
+        const report = await readExperiment(path.join(experimentsDir, id)).catch(() => null);
+        if (!report) return send(404, "experiment not found", "text/plain");
         const specRes = await loadSpec(report.specPath).catch(() => null);
         const exported = await buildExport(report, specRes?.spec?.task.prompt ?? null);
         return send(200, JSON.stringify(exported, null, 2), "application/json");

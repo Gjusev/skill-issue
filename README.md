@@ -38,7 +38,7 @@ node src/cli.ts prepare examples/tasks/release-notes.claude-code.json
 node src/cli.ts run examples/tasks/release-notes.claude-code.json
 ```
 
-Node.js 22.6 or newer is required; the TypeScript source runs natively and there is no build step. The real runner also needs the `claude` CLI installed and authenticated.
+Node.js 22.18 or newer is required (the TypeScript source runs natively and there is no build step; the whole suite is verified on 22.18 and 24). The real runner also needs the `claude` CLI installed and authenticated.
 
 ## What one experiment looks like
 
