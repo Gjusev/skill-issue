@@ -1,9 +1,15 @@
-import { cp, mkdir, stat } from "node:fs/promises";
+import { cp, mkdir, rename, stat } from "node:fs/promises";
 import path from "node:path";
 import { hashTree } from "./hash.ts";
 
 /** Name of the workspace directory that receives the evaluated skill. */
 export const SKILL_INSTALL_DIR = ".claude";
+/**
+ * Fixture-only source name. It becomes SKILL.md only inside the isolated
+ * workspace, so repository discovery tools do not advertise test fixtures as
+ * installable agent skills.
+ */
+const SKILL_TEMPLATE_FILE = "SKILL.template.md";
 
 export interface PreparedWorkspace {
   workspaceDir: string;
@@ -23,6 +29,12 @@ export async function prepareWorkspace(
   if (opts.skill) {
     const dest = path.join(workspaceDir, SKILL_INSTALL_DIR, "skills", opts.skill.name);
     await cp(opts.skill.path, dest, { recursive: true });
+    const installedSkill = path.join(dest, "SKILL.md");
+    try {
+      await stat(installedSkill);
+    } catch {
+      await rename(path.join(dest, SKILL_TEMPLATE_FILE), installedSkill);
+    }
   }
   const initialHashExclSkill = await hashTree(workspaceDir, [SKILL_INSTALL_DIR]);
   return { workspaceDir, initialHashExclSkill };

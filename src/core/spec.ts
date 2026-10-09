@@ -53,8 +53,18 @@ export async function loadSpec(specPath: string): Promise<SpecLoadResult> {
     catch { errors.push(`${label} does not exist: ${p}`); }
   }
   if (resolved.skill) {
-    try { if (!(await stat(path.join(resolved.skill.path, "SKILL.md"))).isFile()) errors.push("skill.path must contain SKILL.md"); }
-    catch { errors.push(`skill.path does not exist or lacks SKILL.md: ${resolved.skill.path}`); }
+    const skillFile = path.join(resolved.skill.path, "SKILL.md");
+    const templateFile = path.join(resolved.skill.path, "SKILL.template.md");
+    try {
+      const hasSkill = (await stat(skillFile)).isFile();
+      if (!hasSkill) errors.push("skill.path must contain SKILL.md");
+    } catch {
+      try {
+        if (!(await stat(templateFile)).isFile()) errors.push("skill.path must contain SKILL.md");
+      } catch {
+        errors.push(`skill.path does not exist or lacks SKILL.md: ${resolved.skill.path}`);
+      }
+    }
   }
   return { ok: errors.length === 0, errors, spec: errors.length === 0 ? resolved : null, baseDir };
 }
