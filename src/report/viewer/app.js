@@ -98,7 +98,7 @@ function metricRow(label, value, unit) {
   return `<tr><th scope="row">${esc(label)}</th><td>${cell}</td></tr>`;
 }
 
-function evidenceButtons(record, variantLabel) {
+function evidenceButtons(record) {
   const btns = record.skillEvidence.evidence.map((ev, i) =>
     `<button type="button" class="evidence-link" data-ev="${i}">▸ ${esc(ev.kind)}: ${esc(ev.detail)}</button>`).join("");
   const extra = `
@@ -139,11 +139,12 @@ async function viewDetail(id) {
       <h2>${esc(rec.variantId)} <span class="muted">· repetition ${rec.repetition}</span></h2>
       <p><span class="badge ${esc(rec.status)}">${esc(rec.status)}</span> ${verifierChip}</p>
       <p class="muted">${esc(rec.endReason)}</p>
+      ${rec.observed && rec.observed.model ? `<p class="muted">observed model: ${esc(rec.observed.model)}${rec.requested.model && rec.observed.model !== rec.requested.model ? ` (requested ${esc(rec.requested.model)} — the environment overrode it)` : ""}</p>` : ""}
       ${rec.comparison.valid ? "" : `<div class="note invalid">This run is excluded from comparison: ${rec.comparison.reasons.map(esc).join(" · ")}</div>`}
       <h3>Activation evidence</h3>
       <p>${installed} ${read}</p>
       <p class="muted">Installed = engine found SKILL.md in the run's config. Observed read = the run's event stream shows the skill being invoked or read. Neither implies the agent followed it — that is what the verifier measures, separately.</p>
-      <div data-evidence="${esc(rec.variantId)}-r${rec.repetition}">${evidenceButtons(rec, rec.variantId)}</div>
+      <div data-evidence="${esc(rec.variantId)}-r${rec.repetition}">${evidenceButtons(rec)}</div>
       <h3>Changes produced</h3>
       ${changes}
       <h3>Measurements</h3>
@@ -152,7 +153,7 @@ async function viewDetail(id) {
           ${metricRow("wall-clock duration", rec.metrics.durationMs, "ms")}
           ${metricRow("input tokens", rec.metrics.tokensIn, "")}
           ${metricRow("output tokens", rec.metrics.tokensOut, "")}
-          ${metricRow("cost", rec.metrics.costUsd, "USD")}
+          ${metricRow("cost", rec.metrics.costUsd == null ? null : Number(rec.metrics.costUsd).toFixed(4), "USD")}
           ${metricRow("turns", rec.metrics.turns, "")}
         </tbody>
       </table>

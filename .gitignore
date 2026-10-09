@@ -27,6 +27,7 @@
 /temp/
 /playwright-report/
 /test-results/
+/.playwright-mcp/
 
 # Dependencies and build/test output.
 node_modules/

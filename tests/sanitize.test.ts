@@ -25,9 +25,26 @@ test("json credential fields are redacted", () => {
   assert.ok(clean.includes('[redacted]'));
 });
 
+test("case-variant bearer and bare key:value forms are redacted", () => {
+  const dirty = "authorization: bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30 and password: hunter2secret and API_KEY=abcd1234efgh5678";
+  const clean = redactCredentials(dirty);
+  assert.ok(!clean.includes("eyJhbGciOiJI"), "lowercase bearer JWT must be redacted");
+  assert.ok(!clean.includes("hunter2secret"), "bare password: value must be redacted");
+  assert.ok(!clean.includes("abcd1234efgh5678"), "bare API_KEY= form must be redacted");
+  assert.ok(clean.includes("[redacted]"));
+});
+
 test("home directory is replaced with ~", () => {
   const out = redactPaths(`reading ${homedir()}\\project\\src\\cli.ts and ${homedir()}/x`);
   assert.ok(!out.includes(homedir()));
+  assert.ok(out.includes("~"));
+});
+
+test("home directory in the opposite separator style is still redacted", () => {
+  const back = homedir().replace(/\\/g, "/");
+  if (back === homedir()) return; // non-Windows: nothing to prove
+  const out = redactPaths(`saw ${back}/project/file.ts`);
+  assert.ok(!out.includes(back), `forward-slash home must be redacted, got: ${out}`);
   assert.ok(out.includes("~"));
 });
 

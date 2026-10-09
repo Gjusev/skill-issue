@@ -97,6 +97,10 @@ async function main() {
       }
       console.log(`runner: ${runner.capabilities.label} (${pre.version})`);
       const reps = args.values.repetitions ? Number(args.values.repetitions) : undefined;
+      if (reps !== undefined && (!Number.isInteger(reps) || reps < 1 || reps > 5)) {
+        console.error("--repetitions must be an integer between 1 and 5");
+        process.exit(1);
+      }
       const controller = new AbortController();
       const onSig = () => { console.error("\ncancelling…"); controller.abort(); };
       process.on("SIGINT", onSig);

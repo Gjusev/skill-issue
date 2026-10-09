@@ -21,6 +21,9 @@ export interface SpawnResult {
   stdout: string;
   stderr: string;
   error: string | null;
+  /** True when a capture cap cut the stream: integrity of the tail is unknown. */
+  stdoutTruncated: boolean;
+  stderrTruncated: boolean;
 }
 
 /** Kill an entire process tree. On Windows child processes are not grouped,
@@ -36,6 +39,13 @@ export function killTree(pid: number): void {
 
 export function spawnCapturing(opts: SpawnOptions): Promise<SpawnResult> {
   const max = opts.maxBufferChars ?? 200_000;
+  // An already-aborted signal must not spawn anything.
+  if (opts.signal?.aborted) {
+    return Promise.resolve({
+      exitCode: null, timedOut: false, cancelled: true, stdout: "", stderr: "",
+      error: null, stdoutTruncated: false, stderrTruncated: false,
+    });
+  }
   return new Promise((resolve) => {
     const child = spawn(opts.cmd, opts.args, {
       cwd: opts.cwd,
@@ -85,6 +95,9 @@ export function spawnCapturing(opts: SpawnOptions): Promise<SpawnResult> {
     let timer: NodeJS.Timeout | undefined;
     if (opts.timeoutMs) {
       timer = setTimeout(() => {
+        // The child may have exited a hair earlier without 'close' yet firing;
+        // only a live process can meaningfully time out.
+        if (child.exitCode !== null || child.signalCode !== null) return;
         timedOut = true;
         killTree(child.pid ?? -1);
       }, opts.timeoutMs);
@@ -107,6 +120,8 @@ export function spawnCapturing(opts: SpawnOptions): Promise<SpawnResult> {
         stdout,
         stderr,
         error,
+        stdoutTruncated: stdout.length >= max,
+        stderrTruncated: stderr.length >= max,
       });
     };
 

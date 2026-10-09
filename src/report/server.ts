@@ -44,6 +44,9 @@ export async function startViewer(opts: { dataDir: string; port: number }): Prom
       if (url.pathname === "/style.css") {
         return send(200, await readFile(path.join(VIEWER_DIR, "style.css"), "utf8"), MIME[".css"]!);
       }
+      if (url.pathname === "/favicon.svg") {
+        return send(200, '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="#0b5cad"/><path d="M4 5h8M4 8h8M4 11h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>', MIME[".svg"]!);
+      }
       if (url.pathname === "/api/experiments") {
         const ids = await listExperiments();
         const items = [];
@@ -65,12 +68,16 @@ export async function startViewer(opts: { dataDir: string; port: number }): Prom
       }
       const detail = url.pathname.match(/^\/api\/experiments\/([^/]+)$/);
       if (detail) {
-        const report = await readExperiment(path.join(experimentsDir, decodeURIComponent(detail[1]!)));
+        const id = decodeURIComponent(detail[1]!);
+        if (!/^[A-Za-z0-9._-]+$/.test(id)) return send(400, "bad experiment id", "text/plain");
+        const report = await readExperiment(path.join(experimentsDir, id));
         return send(200, JSON.stringify(report), "application/json");
       }
       const exp = url.pathname.match(/^\/api\/experiments\/([^/]+)\/export$/);
       if (exp) {
-        const report = await readExperiment(path.join(experimentsDir, decodeURIComponent(exp[1]!)));
+        const id = decodeURIComponent(exp[1]!);
+        if (!/^[A-Za-z0-9._-]+$/.test(id)) return send(400, "bad experiment id", "text/plain");
+        const report = await readExperiment(path.join(experimentsDir, id));
         const specRes = await loadSpec(report.specPath).catch(() => null);
         const exported = await buildExport(report, specRes?.spec?.task.prompt ?? null);
         return send(200, JSON.stringify(exported, null, 2), "application/json");

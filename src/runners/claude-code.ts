@@ -46,7 +46,10 @@ export function buildClaudeEnv(base: NodeJS.ProcessEnv, configDir: string): Reco
 }
 
 export function createClaudeCodeRunner(opts: { claudePath?: string } = {}): RunnerAdapter {
-  const claudePath = opts.claudePath ?? "claude";
+  // Windows note: npm-installed Claude Code is a `claude.cmd` shim, which
+  // spawn(shell:false) cannot resolve from PATH. The native installer's
+  // claude.exe works directly. Allow an explicit path via option or env.
+  const claudePath = opts.claudePath ?? process.env.SKILL_ISSUE_CLAUDE_PATH ?? "claude";
   return {
     id: "claude-code",
     capabilities: { isolateGlobalConfig: true, reportMetrics: true, label: "Claude Code CLI (headless -p)" },
@@ -59,7 +62,12 @@ export function createClaudeCodeRunner(opts: { claudePath?: string } = {}): Runn
         timeoutMs: 15_000,
       });
       const version = res.stdout.trim() || null;
-      if (res.error || version === null) return { ok: false, version, error: res.error ?? "no version output" };
+      if (res.error || version === null) {
+        const hint = res.error?.includes("ENOENT") && process.platform === "win32"
+          ? " (if Claude Code was installed via npm, its claude.cmd shim cannot be spawned without a shell — set SKILL_ISSUE_CLAUDE_PATH to the claude executable, or install the native build)"
+          : "";
+        return { ok: false, version, error: (res.error ?? "no version output") + hint };
+      }
       return { ok: true, version };
     },
     async run(ctx: RunnerContext): Promise<RawRun> {

@@ -22,6 +22,10 @@ export interface ParsedStream {
   skillToolUses: number;
   /** Read/Edit/Write tool_use events targeting the installed skill directory. */
   skillFileReads: number;
+  /** Model reported by the session init event, if any. */
+  observedModel: string | null;
+  /** Skill names reported by the session init event, if any (audit of what the session could see). */
+  observedSkills: string[] | null;
 }
 
 const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
@@ -39,6 +43,8 @@ export function parseStream(stdout: string, skillName: string | null, sanitizeRo
   let skillToolUses = 0;
   let skillFileReads = 0;
   const providerMetrics = { durationMs: null, tokensIn: null, tokensOut: null, costUsd: null, turns: null } as ParsedStream["providerMetrics"];
+  let observedModel: string | null = null;
+  let observedSkills: string[] | null = null;
 
   for (const rawLine of stdout.split("\n")) {
     const line = rawLine.trim();
@@ -54,6 +60,10 @@ export function parseStream(stdout: string, skillName: string | null, sanitizeRo
     switch (obj.type) {
       case "system": {
         const sub = typeof obj.subtype === "string" ? obj.subtype : "";
+        if (sub === "init") {
+          if (typeof obj.model === "string" && obj.model) observedModel = obj.model;
+          if (Array.isArray(obj.skills)) observedSkills = obj.skills.map(String);
+        }
         events.push({ type: `system/${sub || "message"}`, detail: describeSystem(obj) });
         break;
       }
@@ -68,7 +78,9 @@ export function parseStream(stdout: string, skillName: string | null, sanitizeRo
               events.push({ type: `tool_use:${name}`, detail: truncate(sanitizeText(target, sanitizeRoots).slice(0, 160), 160).text });
               if (name === "Skill" && skillName && String(input.skill ?? "") === skillName) skillToolUses++;
               const fp = typeof input.file_path === "string" ? input.file_path.replace(/\\/g, "/") : "";
-              if ((name === "Read" || name === "Edit" || name === "Write") && skillName && fp.includes(`.claude/skills/${skillName}/`)) skillFileReads++;
+              // Only an actual Read supports the "observed read" claim; Edit/Write
+              // are recorded as events but do not by themselves prove reading.
+              if (name === "Read" && skillName && fp.includes(`.claude/skills/${skillName}/`)) skillFileReads++;
             } else if (block?.type === "text" && typeof block.text === "string" && block.text.trim()) {
               events.push({ type: "assistant:text", detail: truncate(sanitizeText(block.text, sanitizeRoots).replace(/\s+/g, " "), 160).text });
             }
@@ -99,7 +111,7 @@ export function parseStream(stdout: string, skillName: string | null, sanitizeRo
         events.push({ type: String(obj.type ?? "unknown"), detail: "" });
     }
   }
-  return { events, resultText, is_error, providerMetrics, corruptLines, skillToolUses, skillFileReads };
+  return { events, resultText, is_error, providerMetrics, corruptLines, skillToolUses, skillFileReads, observedModel, observedSkills };
 }
 
 function describeSystem(obj: any): string {

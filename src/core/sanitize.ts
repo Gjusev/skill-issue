@@ -7,20 +7,23 @@ const CREDENTIAL_PATTERNS: Array<[RegExp, string]> = [
   [/AKIA[0-9A-Z]{16}/g, "[redacted-aws-key]"],
   [/gh[pousr]_[A-Za-z0-9]{20,}/g, "[redacted-github-token]"],
   [/xox[baprs]-[A-Za-z0-9-]{10,}/g, "[redacted-slack-token]"],
-  [/Bearer\s+[A-Za-z0-9._-]{16,}/g, "Bearer [redacted]"],
-  [/"(api[_-]?key|token|password|secret)"\s*:\s*"[^"]{6,}"/gi, '"$1":"[redacted]"'],
+  // HTTP auth schemes are case-insensitive in the wild.
+  [/bearer\s+[A-Za-z0-9._-]{16,}/gi, "bearer [redacted]"],
+  [/"(api[_-]?key|token|password|secret|authorization)"\s*:\s*"[^"]{6,}"/gi, '"$1":"[redacted]"'],
+  [/\b(api[_-]?key|token|password|secret)\b\s*[:=]\s*[^\s"']{6,}/gi, "$1=[redacted]"],
 ];
 
 /** Replace machine-specific absolute path prefixes with stable placeholders. */
 export function redactPaths(text: string, roots: string[] = []): string {
   let out = text;
   const home = homedir();
-  const all = [home, tmpdir(), ...roots];
+  const homeFwd = home.replace(/\\/g, "/");
+  const all = [home, homeFwd, tmpdir(), tmpdir().replace(/\\/g, "/"), ...roots];
   // Longest first so nested prefixes win.
   for (const root of [...all].sort((a, b) => b.length - a.length)) {
     if (!root) continue;
     const norm = root.replace(/([.*+?^${}()|[\]\\])/g, "\\$1");
-    out = out.replace(new RegExp(norm, "g"), root === home ? "~" : "[workspace-root]");
+    out = out.replace(new RegExp(norm, "g"), root === home || root === homeFwd ? "~" : "[workspace-root]");
   }
   return out;
 }

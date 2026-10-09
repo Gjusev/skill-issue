@@ -176,3 +176,26 @@ test("repetitions option overrides the spec", async () => {
   const report = await runExperiment(specPath, createFixtureRunner(), { dataDir, repetitions: 2 });
   assert.equal(report.records.length, 4);
 });
+
+test("an experiment with zero records is explicitly not a valid comparison", async () => {
+  const dataDir = await makeTmp("eng-empty");
+  const specPath = await writeSpec(dataDir, baseSpec({ id: "test-empty" }));
+  const controller = new AbortController();
+  controller.abort(); // abort before any run starts
+  const report = await runExperiment(specPath, createFixtureRunner(), { dataDir, signal: controller.signal });
+  assert.equal(report.records.length, 0);
+  assert.equal(report.comparison.valid, false, "empty experiment must not claim validity");
+  assert.ok(report.comparison.note.includes("No runs recorded"));
+});
+
+test("a spec without a skill runs baseline only — no phantom skill variant", async () => {
+  const dataDir = await makeTmp("eng-noskill");
+  const spec = baseSpec({ id: "test-noskill" });
+  delete spec.skill;
+  const specPath = await writeSpec(dataDir, spec);
+  const report = await runExperiment(specPath, createFixtureRunner(), { dataDir });
+  assert.equal(report.records.length, 1);
+  assert.equal(report.records[0]!.variantId, "baseline");
+  assert.equal(report.records[0]!.status, "passed");
+  assert.equal(report.skill, null);
+});

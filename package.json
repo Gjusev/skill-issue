@@ -16,10 +16,6 @@
     "test:e2e": "node tests/e2e/viewer.e2e.ts",
     "viewer": "node src/cli.ts viewer"
   },
-  "repository": {
-    "type": "git",
-    "url": "local only"
-  },
   "devDependencies": {
     "@types/node": "^24.10.1",
     "puppeteer-core": "^24.30.0",

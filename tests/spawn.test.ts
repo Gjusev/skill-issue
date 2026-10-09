@@ -59,14 +59,29 @@ test("stdout lines are streamed to the callback", async () => {
   assert.deepEqual(lines, ["one", "E:err1", "two"]);
 });
 
-test("killing the tree takes grandchildren with it", async () => {
-  // child spawns a grandchild; timeout must clear both.
+test("killing the tree takes grandchildren with it (orphan detection via file lock)", async () => {
+  const dir = await makeTmp("spawn-tree");
+  const lock = path.join(dir, "grandchild-holds-me.txt");
+  // The grandchild opens the file and HOLDS the handle; on Windows a file
+  // held by a live process cannot be deleted. If the tree kill leaves the
+  // grandchild alive, the unlink below fails — that is the orphan detector.
   const res = await spawnCapturing({
     cmd: process.execPath,
-    args: ["-e", `const {spawn}=require("node:child_process"); const g=spawn(process.execPath,["-e","setTimeout(()=>{},60000)"],{stdio:"ignore"}); setInterval(()=>{},1000); process.on("SIGTERM",()=>{g.kill(); process.exit(9)});`],
+    args: ["-e", `const {spawn}=require("node:child_process"); const fs=require("node:fs");
+      const g=spawn(process.execPath,["-e",${JSON.stringify(`const fs=require("node:fs"); fs.writeFileSync(${JSON.stringify(lock)}, "held"); const fd=fs.openSync(${JSON.stringify(lock)}, "r+"); setInterval(()=>{},1000); process.on("SIGTERM",()=>process.exit(0));`)}],{stdio:"ignore",detached:false});
+      setInterval(()=>{},1000); process.on("SIGTERM",()=>{process.exit(9)});`],
     cwd: process.cwd(),
     env: process.env,
-    timeoutMs: 800,
+    timeoutMs: 900,
   });
   assert.equal(res.timedOut, true);
+  // Give the OS a moment to finish tearing down, then prove the grandchild is
+  // gone by deleting the file it holds open.
+  await new Promise((r) => setTimeout(r, 1500));
+  const fs = await import("node:fs/promises");
+  try {
+    await fs.rm(lock, { force: true });
+  } catch {
+    assert.fail("grandchild appears to still hold the lock file — tree kill left an orphan");
+  }
 });

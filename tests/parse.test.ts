@@ -52,6 +52,22 @@ test("Read of the installed skill path is detected on both separators", () => {
   assert.equal(parseStream(bwd, "demo-skill", []).skillFileReads, 1);
 });
 
+test("observed model and visible skills are captured from the init event", () => {
+  const stream = [
+    line({ type: "system", subtype: "init", model: "glm-5.3-flash[1m]", skills: ["deep-research", "release-notes-format"] }),
+    line({ type: "result", subtype: "success", is_error: false, result: "ok" }),
+  ].join("\n");
+  const parsed = parseStream(stream, "release-notes-format", []);
+  assert.equal(parsed.observedModel, "glm-5.3-flash[1m]");
+  assert.deepEqual(parsed.observedSkills, ["deep-research", "release-notes-format"]);
+});
+
+test("no init event means observed fields are null, not guesses", () => {
+  const parsed = parseStream(line({ type: "result", subtype: "success", is_error: false, result: "ok" }), null, []);
+  assert.equal(parsed.observedModel, null);
+  assert.equal(parsed.observedSkills, null);
+});
+
 test("event details are sanitized against roots", () => {
   const stream = line({ type: "assistant", message: { role: "assistant", content: [{ type: "tool_use", id: "1", name: "Write", input: { file_path: "/tmp/ws-123/out.txt" } }] } });
   const parsed = parseStream(stream, null, ["/tmp/ws-123"]);

@@ -21,6 +21,9 @@ export interface RawRun {
   error: string | null;
   stdout: string;
   stderr: string;
+  /** A capture cap cut the stream; tail integrity unknown. */
+  stdoutTruncated: boolean;
+  stderrTruncated: boolean;
   /** How global configuration was (or was not) kept out of the experiment. */
   isolation: {
     configDirIsolated: boolean;

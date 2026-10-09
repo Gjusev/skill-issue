@@ -26,6 +26,7 @@ function report(): ExperimentReport {
         repetition: 1,
         workspaceId: "baseline-r1",
         requested: { runner: "claude-code", runnerVersion: "2.1.294", model: "sonnet", effort: null, permissions: "acceptEdits", limits: { timeoutMsPerRun: 1000, maxBudgetUsd: 0.5, repetitions: 1 } },
+        observed: { model: "sonnet-5-5", skillsVisible: ["release-notes-format"] },
         hashes: { taskSpec: "a".repeat(64), workspaceInitial: "w", skill: null, verifierBefore: "v", verifierAfter: "v" },
         startedAt: "2026-10-09T00:00:00.000Z",
         endedAt: "2026-10-09T00:00:05.000Z",
@@ -68,4 +69,15 @@ test("export is JSON round-trippable", async () => {
   const back = JSON.parse(JSON.stringify(exp));
   assert.equal(back.exportVersion, 1);
   assert.equal(back.variants.length, 1);
+});
+
+test("export excludes absolute paths even when records contain them", async () => {
+  const home = (await import("node:os")).homedir();
+  const r = report();
+  r.records[0]!.endReason = `failed after touching ${home}\\some\\private\\path and C:\\Users\\who\\elsewhere`;
+  const exp = await buildExport(r, "p");
+  const json = JSON.stringify(exp);
+  assert.ok(!json.includes(home), "home directory must not survive export");
+  assert.ok(!json.includes("C:\\Users\\who"), "other absolute paths must not survive export");
+  assert.ok(json.includes("~"));
 });

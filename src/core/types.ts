@@ -130,6 +130,12 @@ export interface RunRecord {
     permissions: string;
     limits: TaskSpec["limits"];
   };
+  /** What the run actually reported about itself, when it did. */
+  observed: {
+    model: string | null;
+    /** Skill names visible to the session at init (audit of isolation), if reported. */
+    skillsVisible: string[] | null;
+  };
   hashes: {
     taskSpec: string;
     workspaceInitial: string;
