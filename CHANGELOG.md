@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased (branch feature/leaderboard-batch)
+
+- Leaderboard batch mode: `batch` runs every manifest task x {baseline, skill} x k
+  through the existing engine from identical starting bytes, one JSONL row per run
+  (`leaderboard/results/runs.jsonl`), with `--resume` and a hard `--max-runs` guard.
+- Security gate (`src/leaderboard/sandbox.ts`): every skill is scanned before
+  install (network / shell-exec / secret patterns, markdown fence-aware);
+  refusals are recorded into the results with reasons and the skill never runs.
+- `leaderboard/manifest.yaml`: 15 license-verified candidate skills at pinned
+  commits with 3 deterministic task designs each (no LLM judge).
+- Stats wiring via reliagate (subprocess only, no statistics in TypeScript):
+  per-skill paired McNemar for baseline vs skill, Wilson 95% CIs; verdicts
+  "helps / no evidence / hurts" only from the paired test.
+- `leaderboard-report` renders a static site (`leaderboard/site/`) that works on
+  empty/partial data; `.github/workflows/leaderboard.yml` runs batch + report on
+  `workflow_dispatch` only (schedule commented out pending owner spend approval).
+
 ## 0.1.4 (2026-10-09)
 
 - Viewer redesign: Swiss monochrome identity matching the repo brand. Near-black

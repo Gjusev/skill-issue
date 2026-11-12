@@ -1,0 +1,117 @@
+# Weekly skills leaderboard batch + report.
+#
+# SPEND POLICY: this workflow consumes model usage when it runs the batch.
+# It is manual-trigger ONLY. The schedule below is intentionally commented out
+# and MUST stay commented out until the owner approves spend AND sets the
+# LEADERBOARD_SPEND_APPROVED repository variable to "true".
+#
+# TODO(owner): enable the weekly schedule ONLY after approving spend, e.g.:
+#   gh variable set LEADERBOARD_SPEND_APPROVED --body "true"
+#   # then uncomment:
+# schedule:
+#   - cron: "0 6 * * 1"   # Mondays 06:00 UTC — weekly leaderboard increment
+#
+# The batch step additionally hard-fails when the repo variable is not "true",
+# so an accidental schedule enablement cannot spend money by itself.
+
+name: leaderboard
+
+on:
+  workflow_dispatch:
+    inputs:
+      k:
+        description: "repetitions per variant (1-5)"
+        required: false
+        default: "5"
+      max-runs:
+        description: "hard cap on agent runs for this invocation"
+        required: false
+        default: "160"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  batch-report-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # reliagate: statistics live there; skill-issue only writes JSONL and
+      # invokes its CLI as a subprocess.
+      - name: Install reliagate
+        run: pip install git+https://github.com/Gjusev/reliagate.git
+
+      - name: Offline test suite (must pass before any spend)
+        run: |
+          npm ci
+          npm run typecheck
+          npm test
+
+      - name: Spend-approval gate
+        env:
+          SPEND_APPROVED: ${{ vars.LEADERBOARD_SPEND_APPROVED }}
+        run: |
+          if [ "$SPEND_APPROVED" != "true" ]; then
+            echo "REFUSING to run the batch: repository variable"
+            echo "LEADERBOARD_SPEND_APPROVED is not \"true\"."
+            echo "Real runs cost money; the owner must approve spend first (see .github/workflows/leaderboard.yml header)."
+            echo "Rendering the report/site from existing results instead."
+            echo "RUN_BATCH=false" >> "$GITHUB_ENV"
+          else
+            echo "RUN_BATCH=true" >> "$GITHUB_ENV"
+          fi
+
+      # Live model runs go ONLY through the Z.ai Coding Plan (owner rule):
+      # base https://api.z.ai/api/coding/paas/v4, model glm-5.3-flash ONLY,
+      # key from the SKILL_ISSUE_ZAI_KEY secret. Configure the claude-code
+      # runner's endpoint via environment before enabling this job.
+      - name: Run batch
+        if: env.RUN_BATCH == 'true'
+        env:
+          SKILL_ISSUE_ZAI_KEY: ${{ secrets.SKILL_ISSUE_ZAI_KEY }}
+          # workflow_dispatch inputs are trigger-controlled; route through env
+          # (quoted) instead of interpolating directly into the command line.
+          BATCH_K: ${{ inputs.k || '5' }}
+          BATCH_MAX_RUNS: ${{ inputs['max-runs'] || '160' }}
+        run: |
+          node src/cli.ts batch \
+            --manifest leaderboard/manifest.yaml \
+            --k "$BATCH_K" \
+            --harness claude-code \
+            --resume \
+            --max-runs "$BATCH_MAX_RUNS"
+
+      - name: Report (paired stats via reliagate CLI + static site)
+        run: |
+          node src/cli.ts leaderboard-report --manifest leaderboard/manifest.yaml
+
+      - name: Open PR with changed results
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "Gjusev"
+          git config user.email "yoa.yoa91@gmail.com"
+          git checkout -b "leaderboard/run-$(date +%Y%m%d-%H%M)"
+          git add leaderboard/results leaderboard/site
+          if git diff --cached --quiet; then
+            echo "No result changes; nothing to PR."
+            exit 0
+          fi
+          git commit -m "chore(leaderboard): record batch results and regenerate site"
+          git push -u origin "leaderboard/run-$(date +%Y%m%d-%H%M)"
+          gh pr create \
+            --title "Leaderboard results: $(date +%Y-%m-%d)" \
+            --body "Automated leaderboard batch + report. Verdicts come from reliagate's paired McNemar test; review \`leaderboard/site/index.html\` before merging." \
+            --base main \
+            --head "leaderboard/run-$(date +%Y%m%d-%H%M)"
