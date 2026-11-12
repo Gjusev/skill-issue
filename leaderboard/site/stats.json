@@ -1,0 +1,365 @@
+{
+  "generatedAt": "2026-11-12T00:22:56.327Z",
+  "stats": [
+    {
+      "skillId": "find-skills",
+      "commit": "e781cb4d07433dfe1d19e924ed45cc61738c55ec",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "grill-me",
+      "commit": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "agent-browser",
+      "commit": "51b6f8a40c6f1b330f4f2021b1af154ebc6be464",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "hyperframes",
+      "commit": "7ba8f8507545edb75f5b89d14c9727da667a3cb0",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "frontend-design",
+      "commit": "2c5958ecac7cee2b583967a2c4981d0f4a75c579",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "tdd",
+      "commit": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "improve-codebase-architecture",
+      "commit": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "code-review",
+      "commit": "4ae2317ddb22b046e26455e4f9c9b3aaaf62212d",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "remotion-best-practices",
+      "commit": "7e541aa4d7361dfaca0780a565a47307eb7bdfbb",
+      "runs": 0,
+      "tasksWithData": 0,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "design-taste-frontend",
+      "commit": "f6b76575f949707b4e3c37cd86cb44b0b98643e8",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "supabase-postgres-best-practices",
+      "commit": "c9be0e931b7930f7d02126d04774d904c381e7d7",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "brainstorming",
+      "commit": "22f0b463e7a5e579904dd6211a520321035526f7",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "prisma-client-api",
+      "commit": "a6f192959cf43b08aa330fe1ffca090267215812",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "shadcn",
+      "commit": "dd41d19e2f80ff6891951f7ced74c2c9a650b065",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    },
+    {
+      "skillId": "playwright-cli",
+      "commit": "b21724888b8100b05ef8dee3a92f2bb03bf4dcde",
+      "runs": 9,
+      "tasksWithData": 3,
+      "baseline": {
+        "successes": 0,
+        "total": 0,
+        "ci": null
+      },
+      "skill": {
+        "successes": 0,
+        "total": 9,
+        "ci": null
+      },
+      "b": null,
+      "c": null,
+      "pValue": null,
+      "testUsed": null,
+      "gateDecision": null,
+      "verdict": "no data",
+      "costDeltaUsd": null,
+      "error": null
+    }
+  ]
+}

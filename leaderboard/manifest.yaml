@@ -1,0 +1,387 @@
+# Skills leaderboard manifest — seeded from docs/planning/3A-skills-leaderboard-plan.md (§2 shortlist, §3 task designs).
+#
+# Commits: full 40-hex pins of each repo's default-branch HEAD, retrieved from the
+# GitHub API on 2026-11-12. Re-verify before any real batch; re-pin and re-run on drift.
+# Licenses: verified via GitHub API / per-skill LICENSE files on 2026-11-11 (research doc).
+#
+# Rules encoded here:
+#   - Every task has a DETERMINISTIC verifier criterion (file exists / tests pass /
+#     lint holds / ffprobe / fixture-server / schema / string-match / structure).
+#     Never an LLM judge.
+#   - installs = skills.sh cumulative counters (2026-11-11). CONTEXT ONLY — never a
+#     ranking key; the leaderboard orders by measured evidence.
+#   - status: "designed" tasks are blueprints from the research doc (§3). Flip to
+#     "implemented" only when workspaceSeed + verifier script + prompt exist on disk.
+#   - needsNetwork: true = the task needs external network (package installs etc.);
+#     the batch sandbox denies network for tasks that declare false.
+#   - results: relative to this file; one JSONL row per run (or per recorded refusal).
+manifestVersion: 1
+name: public-skills-leaderboard
+harness: claude-code
+k: 5
+results: results/runs.jsonl
+skills:
+  - id: find-skills
+    repo: vercel-labs/skills
+    commit: e781cb4d07433dfe1d19e924ed45cc61738c55ec
+    license: MIT
+    installs: 4315970
+    tasks:
+      - id: install-discovery
+        title: Skill discovery/install for a stated need
+        criterion: .claude/skills/<expected csv skill>/SKILL.md exists and frontmatter name matches the expected slug
+        verifierKind: file-exists
+        needsNetwork: false
+        status: designed
+      - id: wrong-tool-rejection
+        title: Install the right skill, reject the obviously-wrong one
+        criterion: expected skill installed AND wrong skill not referenced in the final diff
+        verifierKind: string-match
+        needsNetwork: false
+        status: designed
+      - id: version-pinning
+        title: Install a named skill at a named version from a local registry fixture
+        criterion: installed SKILL.md bytes hash equals the fixture hash
+        verifierKind: file-exists
+        needsNetwork: false
+        status: designed
+  - id: grill-me
+    repo: mattpocock/skills
+    commit: 4ae2317ddb22b046e26455e4f9c9b3aaaf62212d
+    license: MIT
+    installs: 1536413
+    tasks:
+      - id: contradiction-interrogation
+        title: Interrogate a spec with 3 planted contradictions
+        criterion: QUESTIONS.md exists, >=5 questions, >=2 planted contradiction keywords each appear in some question (regex)
+        verifierKind: string-match
+        needsNetwork: false
+        status: designed
+      - id: question-citations
+        title: Questions must cite the spec line they challenge
+        criterion: every question line matches (spec.md:\d+) pattern, count >= N
+        verifierKind: string-match
+        needsNetwork: false
+        status: designed
+      - id: revision-loop
+        title: Revise the spec after fixed answers
+        criterion: revised spec exists, diff contains resolution markers for all 3 planted issues
+        verifierKind: string-match
+        needsNetwork: false
+        status: designed
+  - id: agent-browser
+    repo: vercel-labs/agent-browser
+    commit: 51b6f8a40c6f1b330f4f2021b1af154ebc6be464
+    license: Apache-2.0
+    installs: 1484038
+    tasks:
+      - id: form-flow
+        title: Fill and submit a 4-field form on a localhost fixture
+        criterion: fixture server log shows POST with all 4 expected values
+        verifierKind: fixture-server
+        needsNetwork: false
+        status: designed
+      - id: multi-page-extraction
+        title: Crawl 3 linked pages, write extracted titles
+        criterion: result.json schema-valid and values match fixture strings exactly
+        verifierKind: schema
+        needsNetwork: false
+        status: designed
+      - id: click-through-path
+        title: Reach a state only reachable via a 3-click path
+        criterion: fixture state file (written server-side on final click) contains expected token
+        verifierKind: fixture-server
+        needsNetwork: false
+        status: designed
+  - id: hyperframes
+    repo: heygen-com/hyperframes
+    commit: 7ba8f8507545edb75f5b89d14c9727da667a3cb0
+    license: Apache-2.0
+    installs: 1482217
+    tasks:
+      - id: html-to-mp4
+        title: Render seeded HTML to MP4
+        criterion: out.mp4 exists, ffprobe reports h264, duration within 100ms of spec, 1920x1080
+        verifierKind: ffprobe
+        needsNetwork: false
+        status: designed
+      - id: animation-timing
+        title: Keyframe timing check at t=1s
+        criterion: ffprobe frame at t=1s decodes to expected dominant color (pixel sample via ffmpeg)
+        verifierKind: ffprobe
+        needsNetwork: false
+        status: designed
+      - id: batch-render
+        title: Batch render 3 scenes
+        criterion: 3 files exist, all pass ffprobe, total duration equals spec sum
+        verifierKind: ffprobe
+        needsNetwork: false
+        status: designed
+  - id: frontend-design
+    repo: anthropics/skills
+    commit: 2c5958ecac7cee2b583967a2c4981d0f4a75c579
+    license: Apache-2.0
+    licenseNote: per-skill LICENSE.txt; repo-level license is None — publish hashes/URLs only, re-check per-skill at publication time
+    installs: 1106335
+    tasks:
+      - id: landing-page
+        title: Landing page from a fixed brief
+        criterion: index.html exists, valid HTML5 (parser check), all referenced assets resolve locally
+        verifierKind: structure
+        needsNetwork: false
+        status: designed
+      - id: token-compliance
+        title: Use the provided tokens.css palette
+        criterion: no hex literals outside the token file (regex); computed styles match token values via headless browser
+        verifierKind: lint-holds
+        needsNetwork: false
+        status: designed
+      - id: accessibility-floor
+        title: Accessibility floor on the built page
+        criterion: axe-core CLI reports 0 critical violations (deterministic tool, not a judge)
+        verifierKind: structure
+        needsNetwork: true
+        status: designed
+  - id: tdd
+    repo: mattpocock/skills
+    commit: 4ae2317ddb22b046e26455e4f9c9b3aaaf62212d
+    license: MIT
+    installs: 1229599
+    tasks:
+      - id: test-first-fix
+        title: Fix a seeded failing function test-first
+        criterion: full suite green AND run-order manifest shows the new test executed before the fix; rerun new test against pristine seed fails
+        verifierKind: tests-pass
+        needsNetwork: false
+        status: designed
+      - id: regression-net
+        title: Write tests for a stated unseeded edge case
+        criterion: tests pass AND mutation check — verifier flips the edge-case line in a scratch copy and the tests must then fail
+        verifierKind: tests-pass
+        needsNetwork: false
+        status: designed
+      - id: red-green-kata
+        title: Red-green cadence on a kata seed
+        criterion: final suite green, >=3 test files exist, seeded module coverage >= stated threshold (c8/istanbul exit code)
+        verifierKind: tests-pass
+        needsNetwork: false
+        status: designed
+  - id: improve-codebase-architecture
+    repo: mattpocock/skills
+    commit: 4ae2317ddb22b046e26455e4f9c9b3aaaf62212d
+    license: MIT
+    installs: 1256557
+    tasks:
+      - id: decouple-god-module
+        title: Decouple a seeded god-module
+        criterion: suite green + madge import-graph shows module count >= target and god-module fan-in <= target
+        verifierKind: structure
+        needsNetwork: true
+        status: designed
+      - id: extract-library
+        title: Extract a library with a pinned public API surface
+        criterion: package builds, api-extractor surface matches golden snapshot, dependent tests green
+        verifierKind: tests-pass
+        needsNetwork: true
+        status: designed
+      - id: dead-code-removal
+        title: Remove dead code without over-deletion
+        criterion: suite green + knip reports 0 unused exports + removed symbol list matches expected set
+        verifierKind: lint-holds
+        needsNetwork: true
+        status: designed
+  - id: code-review
+    repo: mattpocock/skills
+    commit: 4ae2317ddb22b046e26455e4f9c9b3aaaf62212d
+    license: MIT
+    installs: 882032
+    tasks:
+      - id: seeded-bug-pr
+        title: Review a PR with 5 planted defects
+        criterion: review document cites >=4 of 5 canonical file:line locations (string match) and no fabricated location
+        verifierKind: string-match
+        needsNetwork: false
+        status: designed
+      - id: severity-triage
+        title: Triage 5 findings with a fixed severity vocabulary
+        criterion: all 5 classified, >=3 match the answer key
+        verifierKind: string-match
+        needsNetwork: false
+        status: designed
+      - id: review-the-review
+        title: Flag the false positives in a seeded review
+        criterion: output flags exactly the 2 planted false positives (IDs match)
+        verifierKind: string-match
+        needsNetwork: false
+        status: designed
+  - id: remotion-best-practices
+    repo: remotion-dev/skills
+    commit: 7e541aa4d7361dfaca0780a565a47307eb7bdfbb
+    license: unresolved
+    licenseNote: repo-level license None on GitHub API (2026-11-11) — excluded until a per-skill license is confirmed
+    installs: 799143
+    excluded: true
+    excludedReason: license unresolved (repo-level None, GitHub API 2026-11-11); re-check per-skill license before admitting
+    tasks:
+      - id: video-code-render
+        title: Render seeded video-code and verify frames
+        criterion: render completes, frame check passes on output
+        verifierKind: ffprobe
+        needsNetwork: true
+        status: designed
+      - id: composition-timing
+        title: Composition duration matches spec
+        criterion: ffprobe duration within tolerance of spec
+        verifierKind: ffprobe
+        needsNetwork: true
+        status: designed
+      - id: multi-sequence
+        title: Multiple sequences render and verify
+        criterion: all sequence files pass ffprobe with expected properties
+        verifierKind: ffprobe
+        needsNetwork: true
+        status: designed
+  - id: design-taste-frontend
+    repo: leonxlnx/taste-skill
+    commit: f6b76575f949707b4e3c37cd86cb44b0b98643e8
+    license: MIT
+    installs: 763825
+    tasks:
+      - id: spacing-rhythm
+        title: Spacing/rhythm pass on a seeded page
+        criterion: computed styles of seeded selectors satisfy the spacing scale (multiples check) via headless browser
+        verifierKind: structure
+        needsNetwork: false
+        status: designed
+      - id: anti-slop-strip
+        title: Strip placeholder slop
+        criterion: no banned placeholder strings (Lorem, TODO, lorem-ipsum regex) and no default-blue hex
+        verifierKind: lint-holds
+        needsNetwork: false
+        status: designed
+      - id: typography-hierarchy
+        title: Typography hierarchy within spec range
+        criterion: computed font-size ratio between h1/h2/p within spec range via headless browser
+        verifierKind: structure
+        needsNetwork: false
+        status: designed
+  - id: supabase-postgres-best-practices
+    repo: supabase/agent-skills
+    commit: c9be0e931b7930f7d02126d04774d904c381e7d7
+    license: MIT
+    installs: 492581
+    tasks:
+      - id: rls-policies
+        title: Row-level security policies for a seeded schema
+        criterion: pgTAP suite against local Postgres — allowed role sees rows, disallowed role gets 0
+        verifierKind: tests-pass
+        needsNetwork: false
+        status: designed
+      - id: migration-authoring
+        title: Author up/down migrations
+        criterion: up/down applied in sequence on a fresh DB, final schema hash equals golden
+        verifierKind: tests-pass
+        needsNetwork: false
+        status: designed
+      - id: query-fix
+        title: Fix a seeded slow/wrong query
+        criterion: result set matches answer key AND plan uses expected index (EXPLAIN output check)
+        verifierKind: string-match
+        needsNetwork: false
+        status: designed
+  - id: brainstorming
+    repo: obra/superpowers
+    commit: 22f0b463e7a5e579904dd6211a520321035526f7
+    license: MIT
+    installs: 425493
+    tasks:
+      - id: option-generation
+        title: Generate distinct options with trade-offs
+        criterion: IDEAS.md exists with >=N distinct options (dedupe by hash) and an explicit trade-off line per option
+        verifierKind: string-match
+        needsNetwork: false
+        status: designed
+      - id: convergence
+        title: Pick one seeded option with rationale
+        criterion: decision file names a valid option ID + >=3 rationale bullets referencing seeded constraints
+        verifierKind: string-match
+        needsNetwork: false
+        status: designed
+      - id: diverge-converge
+        title: Produce a consistent diverge/converge artifact set
+        criterion: both files exist, cross-references consistent (chosen ID appears in both)
+        verifierKind: structure
+        needsNetwork: false
+        status: designed
+  - id: prisma-client-api
+    repo: prisma/skills
+    commit: a6f192959cf43b08aa330fe1ffca090267215812
+    license: MIT
+    installs: 423524
+    tasks:
+      - id: schema-modeling
+        title: Model a schema from a spec
+        criterion: prisma validate exit 0, prisma generate exit 0, migration applies to local SQLite
+        verifierKind: tests-pass
+        needsNetwork: true
+        status: designed
+      - id: query-correctness
+        title: Answer 5 stated data questions with queries
+        criterion: outputs match answer-key fixtures exactly
+        verifierKind: schema
+        needsNetwork: false
+        status: designed
+      - id: relation-fix
+        title: Fix a seeded N+1 / wrong-relation code
+        criterion: query count under threshold (instrumented driver log) + results correct
+        verifierKind: tests-pass
+        needsNetwork: false
+        status: designed
+  - id: shadcn
+    repo: shadcn-ui/ui
+    commit: dd41d19e2f80ff6891951f7ced74c2c9a650b065
+    license: MIT
+    installs: 271099
+    tasks:
+      - id: add-component
+        title: Add a named component
+        criterion: npx tsc --noEmit exit 0, component file exists, registry snapshot hash matches
+        verifierKind: tests-pass
+        needsNetwork: true
+        status: designed
+      - id: compose-form
+        title: Compose a form from 3 named components
+        criterion: build passes, form submit yields expected serialized payload in a test harness
+        verifierKind: tests-pass
+        needsNetwork: true
+        status: designed
+      - id: theme-tokens
+        title: Theme tokens present and correct
+        criterion: CSS variables for the named theme present and equal to expected values; build green
+        verifierKind: structure
+        needsNetwork: false
+        status: designed
+  - id: playwright-cli
+    repo: microsoft/playwright-cli
+    commit: b21724888b8100b05ef8dee3a92f2bb03bf4dcde
+    license: Apache-2.0
+    installs: 214124
+    tasks:
+      - id: e2e-login-flow
+        title: Author an e2e test for a localhost fixture login flow
+        criterion: npx playwright test exit 0 headless against the local fixture
+        verifierKind: fixture-server
+        needsNetwork: true
+        status: designed
+      - id: test-repair
+        title: Repair a seeded broken test without touching the fixture
+        criterion: suite green after edits AND fixture file unmodified (hash check)
+        verifierKind: fixture-server
+        needsNetwork: true
+        status: designed
+      - id: journey-coverage
+        title: Cover 3 user journeys
+        criterion: all 3 spec files exist, full suite green, traces contain expected navigation URLs
+        verifierKind: fixture-server
+        needsNetwork: true
+        status: designed
