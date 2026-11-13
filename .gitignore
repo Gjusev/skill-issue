@@ -23,6 +23,9 @@
 /.local/
 /runs/
 /artifacts/
+# Leaderboard batch run artifacts (per-run workspaces, streams). The JSONL
+# results and the generated site ARE tracked; raw experiment dirs are not.
+/leaderboard/results/experiments/
 /tmp/
 /temp/
 /playwright-report/

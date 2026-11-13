@@ -20,6 +20,8 @@ import { buildExport } from "./core/export.ts";
 import { createFixtureRunner } from "./runners/fixture.ts";
 import { createClaudeCodeRunner } from "./runners/claude-code.ts";
 import { startViewer } from "./report/server.ts";
+import { runBatch } from "./leaderboard/batch.ts";
+import { generateReport } from "./leaderboard/report.ts";
 
 function usage(exit = 0): never {
   console.log(`skill-issue — compare a task with and without a skill
@@ -31,9 +33,13 @@ function usage(exit = 0): never {
   node src/cli.ts report <experimentDir>
   node src/cli.ts export <experimentDir> [-o out.json]
   node src/cli.ts viewer [--data-dir runs] [--port 4173]
+  node src/cli.ts batch --manifest leaderboard/manifest.yaml [--k 5] [--harness claude-code]
+                            [--resume] [--max-runs N] [--data-dir runs]
+  node src/cli.ts leaderboard-report --manifest leaderboard/manifest.yaml [--site-dir leaderboard/site]
 
-validate/prepare/viewer/init never invoke a model. run does, when the spec's
-runner is a real agent; fixture specs run a simulated agent.
+validate/prepare/viewer/init/leaderboard-report never invoke a model.
+run and batch do, when the runner is a real agent; fixture specs run a simulated
+agent. REAL BATCH RUNS COST MONEY — the owner must approve spend first.
 Node.js >= 22.18 required (runs the TypeScript source natively).`);
   process.exit(exit);
 }
@@ -145,6 +151,13 @@ async function main() {
         repetitions: { type: "string" },
         port: { type: "string", default: "4173" },
         o: { type: "string" },
+        manifest: { type: "string" },
+        k: { type: "string" },
+        harness: { type: "string" },
+        resume: { type: "boolean", default: false },
+        "max-runs": { type: "string" },
+        "site-dir": { type: "string" },
+        "rows-file": { type: "string" },
       },
     });
 
@@ -255,6 +268,75 @@ async function main() {
       const port = Number(args.values.port ?? "4173");
       await mkdir(path.join(dataDir, "experiments"), { recursive: true });
       await startViewer({ dataDir, port });
+      break;
+    }
+    case "batch": {
+      const args = positionals();
+      const manifestPath = args.values.manifest;
+      if (!manifestPath) usage(1);
+      const maxRunsRaw = args.values["max-runs"];
+      let maxRuns: number | undefined;
+      if (maxRunsRaw !== undefined) {
+        maxRuns = Number(maxRunsRaw);
+        if (!Number.isInteger(maxRuns) || maxRuns < 1) {
+          console.error("--max-runs must be a positive integer");
+          process.exit(1);
+        }
+      }
+      const kRaw = args.values.k;
+      let k: number | undefined;
+      if (kRaw !== undefined) {
+        k = Number(kRaw);
+        if (!Number.isInteger(k) || k < 1 || k > 5) {
+          console.error("--k must be an integer between 1 and 5");
+          process.exit(1);
+        }
+      }
+      const harness = args.values.harness as "claude-code" | "fixture" | undefined;
+      if (harness !== undefined && harness !== "claude-code" && harness !== "fixture") {
+        console.error("--harness must be 'claude-code' or 'fixture'");
+        process.exit(1);
+      }
+      const controller = new AbortController();
+      const onSig = () => { console.error("\ncancelling…"); controller.abort(); };
+      process.on("SIGINT", onSig);
+      process.on("SIGTERM", onSig);
+      const summary = await runBatch({
+        manifestPath,
+        k,
+        harness,
+        maxRuns,
+        resume: args.values.resume,
+        dataDir: args.values["data-dir"] ?? "runs",
+        onProgress: (m) => console.log(m),
+      });
+      process.off("SIGINT", onSig);
+      process.off("SIGTERM", onSig);
+      console.log(`\nbatch done — rows: ${summary.rowsFile}`);
+      console.log(`  runs executed: ${summary.runsExecuted}${maxRuns !== undefined ? ` (cap ${maxRuns}${summary.maxRunsReached ? ", reached" : ""})` : ""}`);
+      console.log(`  refusal rows recorded: ${summary.refusalRowsWritten}`);
+      console.log(`  skills allowed: ${summary.skillsAllowed.join(", ") || "(none)"}`);
+      for (const r of summary.skillsRefused) console.log(`  REFUSED ${r.id}: ${r.reason}`);
+      for (const e of summary.skillsExcluded) console.log(`  excluded ${e.id}: ${e.reason}`);
+      if (summary.skillsWithoutSource.length > 0) {
+        console.log(`  no local source (skipped): ${summary.skillsWithoutSource.join(", ")}`);
+      }
+      break;
+    }
+    case "leaderboard-report": {
+      const args = positionals();
+      const manifestPath = args.values.manifest;
+      if (!manifestPath) usage(1);
+      const res = await generateReport({
+        manifestPath,
+        rowsFile: args.values["rows-file"],
+        siteDir: args.values["site-dir"],
+      });
+      for (const s of res.stats) {
+        console.log(`${s.skillId}: verdict=${s.verdict} baseline ${s.baseline.successes}/${s.baseline.total} vs skill ${s.skill.successes}/${s.skill.total}${s.pValue !== null ? ` p=${s.pValue.toFixed(4)}` : ""}${s.error ? ` (reliagate: ${s.error})` : ""}`);
+      }
+      console.log(`\nsite written to ${res.siteDir} (${res.files.length} files)`);
+      console.log(`open: leaderboard/site/index.html`);
       break;
     }
     default:

@@ -106,6 +106,35 @@ The viewer puts the variants side by side with activation evidence, change lists
 | `report <experimentDir>` | text summary of an experiment | no |
 | `export <experimentDir>` | write the sanitized shareable export | no |
 | `viewer [--data-dir] [--port]` | serve the local web viewer | no |
+| `batch --manifest <m.yaml> [--k 5] [--harness claude-code] [--resume] [--max-runs N]` | run every manifest task x {baseline, skill} x k | yes, unless the harness is `fixture` |
+| `leaderboard-report --manifest <m.yaml> [--site-dir leaderboard/site]` | per-skill paired stats via reliagate + static site | no |
+
+## Skills leaderboard (batch mode)
+
+`leaderboard/manifest.yaml` lists 15 candidate skills (pinned commit, license, skills.sh installs as context only) with 3 deterministic task designs each — file-exists / tests-pass / lint-holds / ffprobe / fixture-server / schema / string-match / structure criteria. Never an LLM judge.
+
+```bash
+# 1. Dry look at the plan (no runs, no cost):
+node src/cli.ts leaderboard-report --manifest leaderboard/manifest.yaml
+
+# 2. A real batch — COSTS MONEY and needs owner approval first:
+node src/cli.ts batch --manifest leaderboard/manifest.yaml --k 5 --harness claude-code --resume --max-runs 160
+
+# 3. Stats + static site (offline; reliagate's CLI does the paired tests):
+node src/cli.ts leaderboard-report --manifest leaderboard/manifest.yaml
+# -> leaderboard/site/index.html (one table) + leaderboard/site/skills/<id>.html (raw runs)
+```
+
+What batch mode guarantees:
+
+- **Same bytes in.** Every run goes through the existing engine: both variants of a repetition start from identical workspace bytes, per-run isolated workspace, external verifier hashed before/after.
+- **Security gate first.** Every skill is scanned before install (scripts and fenced code in markdown). Skills that reach the network or shell out (curl/wget, `child_process`, `subprocess`, eval, package installs, git push…) are REFUSED, never installed or run; refusals are recorded into the results JSONL with reasons.
+- **One JSONL row per run.** `{skill_id, skill_commit, task_id, variant, attempt, success, tokens_in, tokens_out, cost_estimate, wall_ms, verifier_hash, error?}` in `leaderboard/results/runs.jsonl`. `success` is `true`/`false`/`null`; `null` is an abstention (infra error or refusal) — never silently counted as a failure.
+- **`--resume`** skips every already-recorded (skill, task, variant, attempt); a results file that already exists is not silently appended to without it. **`--max-runs N`** is a hard cap on agent runs started by one invocation — an experiment that would exceed it is not started at all, so comparisons stay complete.
+- **Honest verdicts.** Verdicts (`helps` / `no evidence` / `hurts`) come only from the paired McNemar test that reliagate computes (`reliagate gate --base … --new … --json`, subprocess). "helps" requires a significant p-value AND a positive direction; everything else is "no evidence". Wilson 95% CIs also come from reliagate; if reliagate is unavailable the numbers degrade to null rather than being invented. No statistics are implemented in TypeScript.
+- **Empty is fine.** The report step and site render "no data yet" states on empty or partial results, fully offline.
+
+The weekly GitHub Action (`.github/workflows/leaderboard.yml`) is `workflow_dispatch` (manual) only; the schedule line is commented out with a TODO — enabling it means approving spend. It runs batch + report and opens a PR with changed results.
 
 ## The words the tool is strict about
 
